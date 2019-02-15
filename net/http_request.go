@@ -14,12 +14,12 @@ import (
 
 var uri = "http://119.28.68.41:9898"
 
-func UpBook(ebook orm.MBook) string {
+func UpBook(ebook orm.Book) string {
 	api := "/novel/data/crawler/v1/books"
 	return net.Post(uri+api,ebook)
 }
 
-func UpChapter(echapter orm.MChapter) string {
+func UpChapter(echapter orm.Chapter) string {
 	api := "/novel/data/crawler/v1/chapters"
 	return net.Post(uri+api,echapter)
 }

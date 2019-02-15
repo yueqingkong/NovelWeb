@@ -1,6 +1,7 @@
 package main
 
 import (
+	"NovelWeb/source"
 	"log"
 )
 
@@ -12,4 +13,6 @@ func main() {
 	//	log.Print(err)
 	//}
 
+	hy := source.HuanYue{}
+	hy.BookAll("http://www.huanyue123.com/book/52/52260/")
 }
