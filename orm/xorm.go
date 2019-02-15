@@ -1,10 +1,13 @@
-package util
+package orm
 
 import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	"log"
 )
+
+type XOrm struct {
+}
 
 type Device struct {
 	Id    int32
@@ -15,10 +18,6 @@ type Device struct {
 var engine *xorm.Engine
 
 func init() {
-	connect()
-}
-
-func connect() {
 	var err error
 	engine, err = xorm.NewEngine("mysql", "root:root@tcp(localhost:3306)/token?charset=utf8")
 	if err != nil {
@@ -32,14 +31,14 @@ func connect() {
 	}
 }
 
-func Insert(i interface{}) {
+func (xorm XOrm) Insert(i interface{}) {
 	_, err := engine.Insert(i)
 	if err != nil {
 		log.Print(err)
 	}
 }
 
-func Deveices() []Device {
+func (xorm XOrm) Deveices() []Device {
 	devices := make([]Device, 0)
 	err := engine.Find(&devices)
 	if err != nil {
