@@ -156,29 +156,29 @@ func(mongo Mongo) UpChapterSuccess(identify string, title string) {
 }
 
 func (mongo Mongo)Upload() {
-	var mBooks = AllMBook()
+	var mBooks = mongo.AllMBook()
 
 	log.Print("Upload mBooks: ", mBooks)
 	for _, mbook := range mBooks {
-		result := UpBook(mbook)
+		result := mongo.UpBook(mbook)
 
 		var resultBook ResultMBook
 		err := json.Unmarshal([]byte(result), &resultBook)
 		if err != nil {
 			log.Fatal(err, resultBook)
 		}
-		UpBookSuccess(mbook.Identifier)
+		mongo.UpBookSuccess(mbook.Identifier)
 	}
 
-	UploadChapter()
+	mongo.UploadChapter()
 }
 
 func (mongo Mongo)UploadChapter() {
-	var mChapters = AllMChapter()
+	var mChapters = mongo.AllMChapter()
 	log.Print("Upload mChapters: ", mChapters)
 
 	for _, mChapter := range mChapters {
-		result := UpChapter(mChapter)
+		result := mongo.UpChapter(mChapter)
 
 		var resultChapter ResultMChapter
 		err := json.Unmarshal([]byte(result), &resultChapter)

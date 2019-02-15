@@ -2,7 +2,6 @@ package plat
 
 import (
 	"Novel/plat"
-	"NovelUp/mgo"
 	"NovelWeb/orm"
 	"NovelWeb/util"
 	"log"
@@ -43,9 +42,10 @@ func (hy HuanYue) Top(top int) {
 		identify := util.MD5(bookinfo.Domain + bookinfo.Name) //网站+书名 hash
 		bookName := bookinfo.Name
 
-		mgoBook := mgo.BookIdentify(identify)
+		mongo:=orm.Mongo{}
+		mgoBook := mongo.BookIdentify(identify)
 		if mgoBook.Identifier == "" { //本地没有保存该书
-			var mBook = mgo.MBook{
+			var mBook = orm.MBook{
 				Identifier:  identify,
 				Domain:      bookinfo.Domain,
 				Name:        bookName,
@@ -65,7 +65,7 @@ func (hy HuanYue) Top(top int) {
 				log.Println("HuanYue book is null")
 				continue
 			} else {
-				mgo.Insert(mBook)
+				mongo.Insert(mBook)
 				log.Print("HuanYue Parser", mBook)
 			}
 		} else {
@@ -75,11 +75,11 @@ func (hy HuanYue) Top(top int) {
 		}
 
 		for key, chapter := range chapters {
-			mgoChapter := mgo.ChapterIdentifyName(identify, chapter.Title)
+			mgoChapter := mongo.ChapterIdentifyName(identify, chapter.Title)
 			if mgoChapter.Identifier == "" { //本地没有保存该章节
 				chapterDetail := plat.Huanyue.Chapter(chapter.Source)
 
-				var mChapter = mgo.MChapter{
+				var mChapter = orm.MChapter{
 					Identifier: identify,
 					Idx:        key + 1,
 					Idx_name:   chapterDetail.Index,
@@ -93,13 +93,13 @@ func (hy HuanYue) Top(top int) {
 					log.Println("HuanYue chapter is null", chapterDetail)
 					continue
 				} else {
-					mgo.Insert(mChapter)
+					mongo.Insert(mChapter)
 					log.Print("HuanYue Parser", mChapter)
 				}
 			}
 
-			mgo.LocalBookFinsih(identify)
+			mongo.LocalBookFinsih(identify)
 		}
-		mgo.Insert(mgo.Website{WebsiteURL: "http://www.huanyue123.com", LastTop: top})
+		mongo.Insert(orm.Website{WebsiteURL: "http://www.huanyue123.com", LastTop: top})
 	}
 }
