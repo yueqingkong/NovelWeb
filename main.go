@@ -13,6 +13,10 @@ func main() {
 	//	log.Print(err)
 	//}
 
+	links := []string{"http://www.huanyue123.com/book/50/50083/"}
 	hy := source.HuanYue{}
-	hy.BookAll("http://www.huanyue123.com/book/52/52260/")
+
+	for _, link := range links {
+		hy.BookAll(link)
+	}
 }

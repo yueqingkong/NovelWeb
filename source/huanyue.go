@@ -306,6 +306,47 @@ func (hy HuanYue) Top(top int) {
 func (hy HuanYue) BookAll(url string) {
 	book, chapters := hy.Book(url)
 
-	log.Print(book)
-	log.Print(chapters)
+	identify := util.MD5(book.Domain + book.Name)
+	filePath := identify + ".jpg"
+	util.FileDownload(filePath, book.Cover)
+
+	var fileResult net.UpFileResult
+	net.UploadFile(filePath, &fileResult)
+
+	xorm := orm.XOrm{}
+	if fileResult.Code == 2000 {
+		book.Cover = fileResult.Data.URL
+	}
+
+	// 书本
+	ormBook := orm.Book{
+		Identifier:  identify,
+		Name:        book.Name,
+		Domain:      book.Domain,
+		Cover:       book.Cover,
+		Source:      book.Source,
+		Describe:    book.Describe,
+		Author:      book.Author,
+		Type:        book.Type,
+		Last_update: book.Update,
+		Language:    book.Language,
+	}
+	xorm.Insert(ormBook)
+
+	// 章节
+	for index, chapter := range chapters {
+		chapterDetail := hy.Chapter(chapter.Source)
+
+		ormChapter := orm.Chapter{
+			Identifier: identify,
+			Idx:        index,
+			Idx_name:   chapter.Index,
+			Title:      chapter.Title,
+			Content:    chapterDetail.Content,
+			Source:     book.Source,
+			Domain:     book.Domain,
+			UpTime:     chapterDetail.Update,
+		}
+		xorm.Insert(ormChapter)
+	}
 }

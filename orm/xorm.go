@@ -21,7 +21,7 @@ type Book struct {
 	Domain      string  `xorm:"varchar(255)" json:"domain"`
 	Cover       string  `xorm:"varchar(255)" json:"cover"`
 	Source      string  `xorm:"varchar(255)" json:"source"`
-	Describe    string  `xorm:"varchar(255)" json:"describe"`
+	Describe    string  `xorm:"varchar(5000)" json:"describe"`
 	Author      string  `xorm:"varchar(255)" json:"author"`
 	Type        string  `xorm:"varchar(255)" json:"type"`
 	Last_update string  `xorm:"varchar(255)" json:"last_update"`
@@ -38,7 +38,7 @@ type Chapter struct {
 	Idx        int    `xorm:"int" json:"idx"`               //索引序列号
 	Idx_name   string `xorm:"varchar(255)" json:"idx_name"` //索引名，第一章，第二章等
 	Title      string `xorm:"varchar(255)" json:"title"`    //标题
-	Content    string `xorm:"varchar(255)" json:"content"`  //内容
+	Content    string `xorm:"text" json:"content"`  //内容
 	Source     string `xorm:"varchar(255)" json:"source"`   //来源 crawler
 	Domain     string `xorm:"varchar(255)" json:"domain"`
 	UpTime     string `xorm:"varchar(255)" json:"uptime"` //上传时间,保存的时候该时间为空。上传成功后，设置为更新章节时间
@@ -48,7 +48,7 @@ var engine *xorm.Engine
 
 func init() {
 	var err error
-	engine, err = xorm.NewEngine("mysql", "root:root@tcp(localhost:3306)/token?charset=utf8")
+	engine, err = xorm.NewEngine("mysql", "root:root@tcp(localhost:3306)/book?charset=utf8")
 	if err != nil {
 		log.Print(err)
 	}
