@@ -1,12 +1,15 @@
 package translate
 
 import (
+	"NovelWeb/net"
+	"bytes"
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/url"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -28,15 +31,42 @@ type YouDaoResult struct {
 	} `json:"smartResult"`
 }
 
-var YD YouDao
-
-func init() {
-	YD = YouDao{
+func NewYouDao() YouDao {
+	return YouDao{
 		Url: "http://fanyi.youdao.com",
 	}
 }
 
-func (youDao YouDao) Translate(source string) string {
+// 翻译，支持超过翻译字数限制
+func (youdao YouDao) Translate(source string) string {
+	reg := regexp.MustCompile("\\s+")
+	source = reg.ReplaceAllString(source, "")
+
+	var content bytes.Buffer
+
+	for i := 0; i < len(source); i += 100 {
+		var endPoint int
+		if i+100 < len(source) {
+			endPoint = i + 100
+		} else {
+			endPoint = len(source)
+		}
+
+		var part string
+		if endPoint == len(source)-1 {
+			part = youdao.TranslateLimit(source[i:])
+		} else {
+			part = youdao.TranslateLimit(source[i:endPoint])
+
+			log.Print("***  ", source[i:endPoint])
+			log.Print("***  ", source[endPoint:])
+		}
+		content.WriteString(part)
+	}
+	return content.String()
+}
+
+func (youDao YouDao) TranslateLimit(source string) string {
 	var api = "http://fanyi.youdao.com/translate_o?smartresult=dict&smartresult=rule"
 
 	salt := youDao.Salt()
@@ -60,20 +90,17 @@ func (youDao YouDao) Translate(source string) string {
 	headers["Cookie"] = "OUTFOX_SEARCH_USER_ID=1799185238@10.169.0.83;"
 	headers["Referer"] = "http://fanyi.youdao.com/"
 
-	param := Param{
-		Api:   api,
-		Value: values.Encode(),
-		Head:  headers,
-	}
-
-	var back = Post(param)
+	var back = net.Post(api, headers, values.Encode())
 
 	var result YouDaoResult
 	err := json.Unmarshal([]byte(back), &result)
 	if err != nil {
-		log.Fatal(err)
+		log.Print("Unmarshal", err)
 	}
-	return result.TranslateResult[0][0].Tgt
+
+	resultTranslate := result.TranslateResult[0][0].Tgt
+	log.Print("[翻译]", source, "   [结果]", resultTranslate)
+	return resultTranslate
 }
 
 func (youDao YouDao) Salt() string {

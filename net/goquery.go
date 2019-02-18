@@ -1,8 +1,7 @@
 package net
 
 import (
-	"Novel/net"
-	"Novel/util"
+	"NovelWeb/util"
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"strings"
@@ -13,7 +12,7 @@ func GoQuery(url string) *goquery.Document {
 	var err error
 
 	log.Print(url)
-	html := net.Get(url)
+	html := Get(url,nil)
 
 	// 兼容GBK
 	html = util.GbkToUtf8(html)

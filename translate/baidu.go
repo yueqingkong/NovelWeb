@@ -1,8 +1,10 @@
 package translate
 
 import (
+	"NovelWeb/net"
 	"bytes"
 	"encoding/json"
+	"github.com/jinzhongmin/gtra"
 	"github.com/robertkrimen/otto"
 	"log"
 	"net/url"
@@ -40,12 +42,19 @@ type BaiDuResult struct {
 	Logid int64 `json:"logid"`
 }
 
-var BD BaiDu
-
-func init() {
-	BD = BaiDu{
+func NewBaiDu() BaiDu {
+	return BaiDu{
 		url: "https://fanyi.baidu.com/v2transapi",
 	}
+}
+
+func (baidu BaiDu) TranslateGoogle(source string) string {
+
+	t := gtra.NewTranslater()
+	_, content := t.Translate(source)
+
+	log.Print("[翻译]", source, "  ", content)
+	return content
 }
 
 // 翻译，支持超过翻译字数限制
@@ -61,17 +70,17 @@ func (baidu BaiDu) Translate(source string) string {
 		}
 
 		var part string
-		if endPoint == len(source) {
-			part = baidu.translateLimit(source[i:])
+		if endPoint == len(source)-1 {
+			part = baidu.TranslateLimit(source[i:])
 		} else {
-			part = baidu.translateLimit(source[i:endPoint])
+			part = baidu.TranslateLimit(source[i:endPoint])
 		}
 		content.WriteString(part)
 	}
 	return content.String()
 }
 
-func (bd BaiDu) translateLimit(source string) string {
+func (bd BaiDu) TranslateLimit(source string) string {
 	var api = "https://fanyi.baidu.com/v2transapi"
 
 	sign := bd.Sign(source)
@@ -91,18 +100,13 @@ func (bd BaiDu) translateLimit(source string) string {
 	var headers = make(map[string]string)
 	headers["Cookie"] = "BAIDUID=16FFA1EAAF1A387C647A22DB9FC81DAE:FG=1; BIDUPSID=16FFA1EAAF1A387C647A22DB9FC81DAE; PSTM=1514024118; __cfduid=d2f7fd3a024d1ee90b8a817ddd866d9bc1514812370; REALTIME_TRANS_SWITCH=1; FANYI_WORD_SWITCH=1; HISTORY_SWITCH=1; SOUND_SPD_SWITCH=1; SOUND_PREFER_SWITCH=1; BDUSS=E83bFplYnBRen5hV3FKNDZCM3ZSZldWMVBjV1ZGbW9uTTVwcjFYVDQzTGVFTlJhQVFBQUFBJCQAAAAAAAAAAAEAAADnIjgkcG9obG9ndTQxNTA3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAN6DrFreg6xaS; BDORZ=B490B5EBF6F3CD402E515D22BCDA1598; H_PS_PSSID=1429_21103_18559_22075; PSINO=3; locale=zh; Hm_lvt_64ecd82404c51e03dc91cb9e8c025574=1525654866,1525657996,1525658015,1525671031; Hm_lpvt_64ecd82404c51e03dc91cb9e8c025574=1525671031; to_lang_often=%5B%7B%22value%22%3A%22en%22%2C%22text%22%3A%22%u82F1%u8BED%22%7D%2C%7B%22value%22%3A%22zh%22%2C%22text%22%3A%22%u4E2D%u6587%22%7D%5D; from_lang_often=%5B%7B%22value%22%3A%22zh%22%2C%22text%22%3A%22%u4E2D%u6587%22%7D%2C%7B%22value%22%3A%22en%22%2C%22text%22%3A%22%u82F1%u8BED%22%7D%5D"
 
-	param := Param{
-		Api:   api,
-		Value: values.Encode(),
-		Head:  headers,
-	}
-
-	var back = Post(param)
+	var back = net.Get(api+"?"+values.Encode(), headers)
 	var result BaiDuResult
 	err := json.Unmarshal([]byte(back), &result)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err,"  ",back)
 	}
+
 	return result.TransResult.Data[0].Dst
 }
 

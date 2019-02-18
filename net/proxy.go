@@ -1,10 +1,13 @@
 package net
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"io/ioutil"
 	"log"
 	"math/rand"
+	"net/http"
 	"regexp"
 	"strconv"
 )
@@ -51,7 +54,7 @@ func UserProxy() Proxy {
 }
 
 func init() {
-	//Parser()
+	Parser()
 }
 
 func Parser() {
@@ -77,9 +80,9 @@ func Parser() {
 	})
 
 	log.Print("proxy:   maxpage ", maxPage)
-	for index := 1; index <= 1; index++ {
-		PageDetail(index)
-	}
+	//for index := 1; index <= 1; index++ {
+	//	PageDetail(index)
+	//}
 }
 
 func PageDetail(index int) {
@@ -104,4 +107,26 @@ func PageDetail(index int) {
 		ProxyArr = append(ProxyArr, proxy)
 	})
 	log.Println(ProxyArr)
+}
+
+func ProxyIp() ProxyInfo {
+	client := http.Client{}
+	res, err := client.Get("http://localhost:8090/get")
+	if err != nil {
+		log.Print(err)
+	}
+
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Println("body: ", err)
+	}
+
+	var info ProxyInfo
+	err = json.Unmarshal(body, &info)
+	if err != nil {
+		log.Print(err)
+	}
+	return info
 }

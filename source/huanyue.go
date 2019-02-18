@@ -3,6 +3,7 @@ package source
 import (
 	"NovelWeb/net"
 	"NovelWeb/orm"
+	"NovelWeb/translate"
 	"NovelWeb/util"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -318,15 +319,19 @@ func (hy HuanYue) BookAll(url string) {
 		book.Cover = fileResult.Data.URL
 	}
 
+	//translate := translate.NewBaiDu()
+	translate := translate.NewYouDao()
+	//translate := translate.NewTranslate{}
+
 	// 书本
 	ormBook := orm.Book{
 		Identifier:  identify,
-		Name:        book.Name,
+		Name:        translate.TranslateLimit(book.Name),
 		Domain:      book.Domain,
 		Cover:       book.Cover,
 		Source:      book.Source,
-		Describe:    book.Describe,
-		Author:      book.Author,
+		Describe:    translate.TranslateLimit(book.Describe),
+		Author:      translate.TranslateLimit(book.Author),
 		Type:        book.Type,
 		Last_update: book.Update,
 		Language:    book.Language,
@@ -340,9 +345,9 @@ func (hy HuanYue) BookAll(url string) {
 		ormChapter := orm.Chapter{
 			Identifier: identify,
 			Idx:        index,
-			Idx_name:   chapter.Index,
-			Title:      chapter.Title,
-			Content:    chapterDetail.Content,
+			Idx_name:   translate.TranslateLimit(chapter.Index),
+			Title:      translate.TranslateLimit(chapter.Title),
+			Content:    translate.TranslateLimit(chapterDetail.Content),
 			Source:     book.Source,
 			Domain:     book.Domain,
 			UpTime:     chapterDetail.Update,
