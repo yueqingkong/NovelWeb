@@ -69,6 +69,7 @@ func (youdao YouDao) Translate(source string) string {
 func (youDao YouDao) TranslateLimit(source string) string {
 	var api = "http://fanyi.youdao.com/translate_o?smartresult=dict&smartresult=rule"
 
+	log.Print("source", source)
 	salt := youDao.Salt()
 	sign := youDao.Sign("fanyideskweb" + source + salt + "ebSeFb%=XZ%T[KZ)c(sy!")
 
@@ -90,7 +91,8 @@ func (youDao YouDao) TranslateLimit(source string) string {
 	headers["Cookie"] = "OUTFOX_SEARCH_USER_ID=1799185238@10.169.0.83;"
 	headers["Referer"] = "http://fanyi.youdao.com/"
 
-	var back = net.Post(api, headers, values.Encode())
+	query := values.Encode()
+	var back = net.Post(api, headers, query)
 
 	var result YouDaoResult
 	err := json.Unmarshal([]byte(back), &result)

@@ -4,15 +4,12 @@ import (
 	"NovelWeb/orm"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
-	"net/url"
 	"os"
-	"strings"
 )
 
 var uri = "http://119.28.68.41:8989"
@@ -83,14 +80,17 @@ func Post(url string, header map[string]string, value interface{}) string {
 }
 
 func request(method string, api string, header map[string]string, content interface{}) string {
-	proxyIp := ProxyIp()
-	temp := fmt.Sprintf("http://%s:%d", proxyIp.IP, proxyIp.Port)
-	urlproxy, _ := url.Parse(temp)
-	transport := &http.Transport{Proxy: http.ProxyURL(urlproxy)}
+	//proxyIp := ProxyIp()
+	//temp := fmt.Sprintf("http://%s:%d", proxyIp.IP, proxyIp.Port)
+	//urlproxy, _ := url.Parse(temp)
+	//transport := &http.Transport{Proxy: http.ProxyURL(urlproxy)}
+	//
+	//client := &http.Client{
+	//	Transport: transport,
+	//}
 
-	client := &http.Client{
-		Transport: transport,
-	}
+
+	client := &http.Client{}
 
 	var reader io.Reader
 	var err error
@@ -98,7 +98,8 @@ func request(method string, api string, header map[string]string, content interf
 	if content != nil {
 		switch content.(type) {
 		case string:
-			reader = strings.NewReader(content.(string))
+			arr:= []byte(content.(string))
+			reader = bytes.NewReader(arr)
 			break
 		default:
 			arr, _ := json.Marshal(content)
