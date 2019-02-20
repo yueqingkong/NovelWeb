@@ -17,8 +17,8 @@ type Device struct {
 
 type Book struct {
 	Identifier  string  `xorm:"varchar(255)" json:"identifier"`
-	Name        string  `xorm:"varchar(255)" json:"name"`
 	Domain      string  `xorm:"varchar(255)" json:"domain"`
+	Name        string  `xorm:"varchar(255)" json:"name"`
 	Cover       string  `xorm:"varchar(255)" json:"cover"`
 	Source      string  `xorm:"varchar(255)" json:"source"`
 	Describe    string  `xorm:"varchar(5000)" json:"describe"`
@@ -29,8 +29,10 @@ type Book struct {
 	Source_ctr  int64   `xorm:"bigint" json:"source_ctr"`
 	Ctr         int64   `xorm:"bigint" json:"ctr"`
 	Score       float32 `xorm:"float" json:"score"`
-	Finish      string  `xorm:"varchar(255)" json:"finish"` //章节解析完成时间
-	UpTime      string  `xorm:"varchar(255)" json:"uptime"` //上传时间,保存的时候该时间为空。上传成功后，设置为更新章节时间
+	Keywords    string  `xorm:"varchar(255)" json:"keywords"`
+	Idx         int     `xorm:"int" json:"idx"`             //索引序列号
+	Status      string  `xorm:"varchar(255)" json:"status"` //状态 1:完成 2：连载
+	IsUpload    int     `xorm:"int" json:"is_upload"`       //上传状态,上传成功后，更新状态位 1
 }
 
 type Chapter struct {
@@ -41,7 +43,11 @@ type Chapter struct {
 	Content    string `xorm:"text" json:"content"`          //内容
 	Source     string `xorm:"varchar(255)" json:"source"`   //来源 crawler
 	Domain     string `xorm:"varchar(255)" json:"domain"`
-	UpTime     string `xorm:"varchar(255)" json:"uptime"` //上传时间,保存的时候该时间为空。上传成功后，设置为更新章节时间
+	LastUpdate string `xorm:"varchar(255)" json:"last_update"`
+	Keywords   string `xorm:"varchar(255)" json:"keywords"`
+	Index      int    `xorm:"varchar(255)" json:"index"`      //索引序列号
+	BookIndex  int    `xorm:"varchar(255)" json:"book_index"` //索引序列号
+	IsUpload   int    `xorm:"int" json:"is_upload"`           //上传状态,上传成功后，更新状态位 1
 }
 
 var engine *xorm.Engine
@@ -58,6 +64,10 @@ func init() {
 	if err != nil {
 		log.Print(err)
 	}
+}
+
+func NewXOrm() XOrm {
+	return XOrm{}
 }
 
 func (xorm XOrm) Insert(i interface{}) {

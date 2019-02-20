@@ -3,11 +3,11 @@ package source
 import (
 	"NovelWeb/net"
 	"NovelWeb/orm"
-	"NovelWeb/translate"
 	"NovelWeb/util"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -24,8 +24,8 @@ func NewHuanYue() HuanYue {
 }
 
 // 关键字查询
-func (huan HuanYue) SearchKeyword(keyword string, page int) (int, []BookInfo) {
-	var bookInfos = make([]BookInfo, 0)
+func (huan HuanYue) SearchKeyword(keyword string, page int) (int, []orm.Book) {
+	var bookInfos = make([]orm.Book, 0)
 
 	var api = "/modules/article/search.php?searchkey=%s&page=%d"
 	var url = fmt.Sprintf(url+api, util.Utf8ToGbk(keyword), page)
@@ -37,7 +37,7 @@ func (huan HuanYue) SearchKeyword(keyword string, page int) (int, []BookInfo) {
 			return
 		}
 
-		var bookInfo BookInfo
+		var bookInfo orm.Book
 		sec.Find("td").Each(func(i int, sec *goquery.Selection) {
 			if i == 0 {
 				a := sec.Find("a")
@@ -47,15 +47,15 @@ func (huan HuanYue) SearchKeyword(keyword string, page int) (int, []BookInfo) {
 				bookInfo.Name = name
 				bookInfo.Source = source
 			} else if i == 1 {
-				a := sec.Find("a")
-				index, title := util.SepatateTitle(a.Text())
-				href := a.AttrOr("href", "")
-
-				bookInfo.Chapter = ChapterInfo{
-					Index:  index,
-					Title:  title,
-					Source: href,
-				}
+				//a := sec.Find("a")
+				//index, title := util.SepatateTitle(a.Text())
+				//href := a.AttrOr("href", "")
+				//
+				//bookInfo.Chapter = ChapterInfo{
+				//	Index:  index,
+				//	Title:  title,
+				//	Source: href,
+				//}
 			} else if i == 2 {
 				author := sec.Text()
 				bookInfo.Author = author
@@ -63,7 +63,7 @@ func (huan HuanYue) SearchKeyword(keyword string, page int) (int, []BookInfo) {
 
 			} else if i == 4 {
 				update := sec.Text()
-				bookInfo.Update = update
+				bookInfo.Last_update = update
 			}
 		})
 
@@ -76,101 +76,111 @@ func (huan HuanYue) SearchKeyword(keyword string, page int) (int, []BookInfo) {
 }
 
 // 书本简介及章节列表
-func (huan HuanYue) Book(url string) (BookInfo, []ChapterInfo) {
-	var bookInfo BookInfo
-	var chapterInfos []ChapterInfo
+func (huan HuanYue) Book(url string) (orm.Book, []orm.Chapter) {
+	var book orm.Book
+	var chapterInfos []orm.Chapter
 
-	bookInfo.Domain = url
+	book.Domain = url
+	book.Source = "crawler"
+	book.Language = "zh"
+	book.Source_ctr = 3
+	book.Score = 3.0
+
 	var doc = net.GoQuery(url)
 
 	booktype := doc.Find("div.main").Find("a").Next().Text()
-	bookInfo.Type = booktype
+	book.Type = booktype
 
 	doc.Find("div.book_info").Find("div").Each(func(i int, sec *goquery.Selection) {
 		if i == 0 {
 			img := sec.Find("img").AttrOr("src", "")
-			bookInfo.Cover = img
+			book.Cover = img
 		} else if i == 1 {
 			name := sec.Find("h1").Text()
-			bookInfo.Name = name
+			book.Name = name
 
-			author := strings.Split(sec.Find("span.red").Text(), "：")[1]
-			bookInfo.Author = author
+			sec.Find("span.item").Each(func(i int, sec *goquery.Selection) {
+				if i == 0 {
+					author := strings.Split(sec.Text(), "：")[1]
+					book.Author = author
+				} else if i == 1 {
+					var status string
+					value := sec.Text()
+					if value == "连载中" {
+						status = "2"
+					} else {
+						status = "1"
+					}
+					book.Status = status
+				}
+			})
 
 			options := sec.Find("h3").Find("div.options")
+			optionTxt := options.Text()
 			update := strings.Split(options.Find("span.hottext").Text(), "：")[1]
-			bookInfo.Update = update
-
-			a := options.Find("a")
-			index, title := util.SepatateTitle(a.Text())
-			href := a.AttrOr("href", "")
-			bookInfo.Chapter = ChapterInfo{
-				Index:  index,
-				Title:  title,
-				Source: url + href,
-			}
+			book.Last_update = update
 
 			describe := sec.Find("h3").Text()
-			bookInfo.Describe = describe
+			describe = strings.Replace(describe, optionTxt, "", -1)
+			reg, _ := regexp.Compile("(^\\s*)|(《\\S*》简介：\\s*)|(\\s*$)")
+			describe = reg.ReplaceAllString(describe, "")
+			book.Describe = describe
 		}
 	})
 
 	doc.Find("div.book_list").Find("li").Each(func(i int, sec *goquery.Selection) {
-		var chapterInfo ChapterInfo
+		var chapterInfo orm.Chapter
 		a := sec.Find("a")
-		index, title := util.SepatateTitle(a.Text())
+		indexName, title := util.SepatateTitle(a.Text())
 		href := a.AttrOr("href", "")
 
-		chapterInfo = ChapterInfo{
-			Index:  index,
-			Title:  title,
-			Source: href,
+		chapterInfo = orm.Chapter{
+			Index:    i,
+			Idx_name: indexName,
+			Title:    title,
+			Domain:   href,
 		}
 		chapterInfos = append(chapterInfos, chapterInfo)
 	})
 
-	bookInfo.Type = "unknow"
-	return bookInfo, chapterInfos
+	return book, chapterInfos
 }
 
 // 章节详情
-func (huan HuanYue) Chapter(url string) ChapterDetail {
-	var chapterDetail ChapterDetail
+func (huan HuanYue) Chapter(url string) orm.Chapter {
+	var chapter orm.Chapter
 
-	chapterDetail.Domain = url
+	chapter.Domain = url
+	chapter.Source = "crawler"
 
 	var doc = net.GoQuery(url)
 	body := doc.Find("div.wrapper_main")
-	index, title := util.SepatateTitle(body.Find("div.h1title").Text())
-	chapterDetail.Index = index
-	chapterDetail.Title = title
 
-	body.Find("div.chapter_Turnpage_1").Find("a").Each(func(i int, sec *goquery.Selection) {
-		href := sec.AttrOr("href", "")
-		if i == 0 {
-			chapterDetail.Last = url + href
-		} else if i == 4 {
-			chapterDetail.Next = url + href
-		}
-	})
+	// 章节及标题
+	showTitle := body.Find("div.h1title").Text()
+	indexName, title := util.SepatateTitle(showTitle)
+	chapter.Idx_name = indexName
+	chapter.Title = title
+
+	// 内容
 	content := body.Find("div#htmlContent").Text()
 
-	// 章节错误,点此举报(免注册)
+	// 过滤 章节错误,点此举报(免注册)
 	content = strings.Replace(content, "章节错误,点此举报(免注册)", "", -1)
-	chapterDetail.Content = content
+	chapter.Content = content
 
-	return chapterDetail
+	return chapter
 }
 
 // 每页全本的列表
-func (huan HuanYue) QuanBenTop(tp int) (int, []BookInfo) {
-	var bookInfos []BookInfo
+func (huan HuanYue) QuanBenTop(tp int) (int, []orm.Book) {
+	var bookInfos []orm.Book
 	var api = "/book/quanbu/default-0-0-0-0-2-0-%d.html"
 	var url = fmt.Sprintf(url+api, tp)
 
 	var doc = net.GoQuery(url)
 	doc.Find("div.sitebox").Find("dl").Each(func(i int, sec *goquery.Selection) {
-		var bookInfo BookInfo
+		var bookInfo orm.Book
 		bookInfo.Domain = url
 		bookInfo.Type = "unknow"
 
@@ -180,7 +190,7 @@ func (huan HuanYue) QuanBenTop(tp int) (int, []BookInfo) {
 		sec.Find("dd").Each(func(i int, sec *goquery.Selection) {
 			if i == 0 {
 				update := sec.Find("span").Text()
-				bookInfo.Update = update
+				bookInfo.Last_update = update
 
 				a := sec.Find("a")
 				name := a.Text()
@@ -194,14 +204,14 @@ func (huan HuanYue) QuanBenTop(tp int) (int, []BookInfo) {
 				describe := sec.Text()
 				bookInfo.Describe = describe
 			} else if i == 3 {
-				a := sec.Find("a")
-				index, title := util.SepatateTitle(a.Text())
-				href := a.AttrOr("href", "")
-				bookInfo.Chapter = ChapterInfo{
-					Index:  index,
-					Title:  title,
-					Source: url + href,
-				}
+				//a := sec.Find("a")
+				//index, title := util.SepatateTitle(a.Text())
+				//href := a.AttrOr("href", "")
+				//bookInfo.Chapter = orm.Chapter{
+				//	Index:  index,
+				//	Title:  title,
+				//	Source: url + href,
+				//}
 			}
 		})
 		bookInfos = append(bookInfos, bookInfo)
@@ -264,7 +274,7 @@ func (hy HuanYue) Top(top int) {
 				Describe:    book.Describe,
 				Author:      bookinfo.Author,
 				Type:        bookinfo.Type,
-				Last_update: bookinfo.Update,
+				Last_update: bookinfo.Last_update,
 				Language:    "zh",
 				Source_ctr:  1,
 				Ctr:         1,
@@ -288,7 +298,7 @@ func (hy HuanYue) Top(top int) {
 				var mChapter = orm.Chapter{
 					Identifier: identify,
 					Idx:        key + 1,
-					Idx_name:   chapterDetail.Index,
+					Idx_name:   string(chapterDetail.Index),
 					Title:      chapterDetail.Title,
 					Content:    chapterDetail.Content,
 					Source:     "crawler",
@@ -312,13 +322,11 @@ func (hy HuanYue) BookAll(url string) {
 	book, chapters := hy.Book(url)
 
 	xorm := orm.XOrm{}
-	baiduTrans := translate.NewBaiDu()
 
 	// 书本信息
 	identify := util.MD5(book.Domain + book.Name)
-	log.Print("identify", identify)
 	if xorm.BookExist(identify) {
-		log.Print("[小说已存在]", book.Name)
+		log.Print("[小说 Book 已存在]", book.Name)
 	} else {
 		filePath := identify + ".jpg"
 		util.FileDownload(filePath, book.Cover)
@@ -330,61 +338,66 @@ func (hy HuanYue) BookAll(url string) {
 			book.Cover = fileResult.Data.URL
 		}
 
-		transBookName := baiduTrans.Translate(book.Name)
-		transBookDesc := baiduTrans.Translate(book.Describe)
-		transBookAuthor := baiduTrans.Translate(book.Author)
-		transBookType := baiduTrans.Translate(book.Type)
+		transBookName := net.Translate(book.Name)
+		transBookDesc := net.Translate(book.Describe)
+		transBookAuthor := net.Translate(book.Author)
+		transBookType := net.Translate(book.Type)
 
 		// 翻译失败
 		if transBookName == "" || transBookDesc == "" || transBookAuthor == "" {
-			log.Print("[小说信息翻译失败]", book.Source, transBookName, transBookDesc, transBookAuthor)
-		} else {
-			ormBook := orm.Book{
-				Identifier:  identify,
-				Name:        transBookName,
-				Domain:      book.Domain,
-				Cover:       book.Cover,
-				Source:      book.Source,
-				Describe:    transBookDesc,
-				Author:      transBookAuthor,
-				Type:        transBookType,
-				Last_update: book.Update,
-				Language:    book.Language,
-			}
+			log.Print("[小说 Book 翻译失败]", book, transBookName, transBookDesc, transBookAuthor)
 
-			log.Print("[小说]", ormBook)
-			xorm.Insert(ormBook)
+			if transBookName == "" {
+				log.Print("[书名为空]", book.Name, "==", transBookName)
+			} else if transBookDesc == "" {
+				log.Print("[简介为空]", book.Describe, "==", transBookDesc)
+			} else if transBookAuthor == "" {
+				log.Print("[作者为空]", book.Author, "==", transBookAuthor)
+			}
+		} else {
+			book.Identifier = identify
+			book.Name = transBookName
+			book.Describe = transBookDesc
+			book.Author = transBookAuthor
+			book.Type = transBookType
+
+			log.Print("[小说]", book)
+			xorm.Insert(book)
 		}
 	}
 
 	// 章节
-	for index, chapter := range chapters {
-		if xorm.ChapterExist(identify, string(index)) {
-			log.Print("[章节已存在]", book.Name, chapter.Title)
+	for _, simpleChapter := range chapters {
+		if xorm.ChapterExist(identify, string(simpleChapter.Idx)) {
+			log.Print("[章节已存在]", book.Name, simpleChapter.Title)
 		} else {
-			chapterDetail := hy.Chapter(chapter.Source)
+			chapter := hy.Chapter(simpleChapter.Domain)
+			log.Print("chapter: ", chapter)
 
-			transChapterIndex := baiduTrans.Translate(chapter.Index)
-			transChapterTitle := baiduTrans.Translate(chapter.Title)
-			transChapterContent := baiduTrans.Translate(chapterDetail.Content)
+			transIndexName := net.Translate(chapter.Idx_name)
+			transTitle := net.Translate(chapter.Title)
+			transContent := net.Translate(chapter.Content)
 
 			// 章节翻译失败
-			if transChapterIndex == "" || transChapterTitle == "" || transChapterContent == "" {
-				log.Print("[小说章节信息翻译失败]", chapter.Source, transChapterIndex, transChapterTitle, transChapterContent)
-			} else {
-				ormChapter := orm.Chapter{
-					Identifier: identify,
-					Idx:        index,
-					Idx_name:   transChapterIndex,
-					Title:      transChapterTitle,
-					Content:    transChapterContent,
-					Source:     chapter.Source,
-					Domain:     book.Domain,
-					UpTime:     chapterDetail.Update,
-				}
+			if transIndexName == "" || transTitle == "" || transContent == "" {
+				log.Print("[小说章节信息翻译失败]", simpleChapter, simpleChapter.Domain, transIndexName, transTitle, transContent)
 
-				log.Print("[章节]", book.Name, ormChapter)
-				xorm.Insert(ormChapter)
+				if transIndexName == "" {
+					log.Print("[章节名称为空]", chapter.Idx_name, "==", transIndexName)
+				} else if transTitle == "" {
+					log.Print("[章节标题为空]", chapter.Title, "==", transTitle)
+				} else if transContent == "" {
+					log.Print("[章节内容为空]", chapter.Content, "==", transContent)
+				}
+			} else {
+				chapter.Identifier = identify
+				chapter.Idx_name = transIndexName
+				chapter.Title = transTitle
+				chapter.Content = transContent
+				chapter.Source = "crawler"
+
+				log.Print("[章节]", book.Name, chapter)
+				xorm.Insert(chapter)
 			}
 		}
 	}
