@@ -13,7 +13,7 @@ function token(a) {
     }
     a = b;
     for (f = 0; f < e.length; f++) a += e[f],
-    a = RL(a, sb);
+        a = RL(a, sb);
     a = RL(a, Zb);
     a ^= b1 || 0;
     0 > a && (a = (a & 2147483647) + 2147483648);
@@ -26,8 +26,8 @@ function RL(a, b) {
     var Yb = "+";
     for (var c = 0; c < b.length - 2; c += 3) {
         var d = b.charAt(c + 2),
-        d = d >= t ? d.charCodeAt(0) - 87 : Number(d),
-        d = b.charAt(c + 1) == Yb ? a >>> d: a << d;
+            d = d >= t ? d.charCodeAt(0) - 87 : Number(d),
+            d = b.charAt(c + 1) == Yb ? a >>> d: a << d;
         a = b.charAt(c) == Yb ? a + d & 4294967295 : a ^ d
     }
     return a

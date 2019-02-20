@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strings"
 )
 
 var uri = "http://119.28.68.41:8989"
@@ -98,8 +99,8 @@ func request(method string, api string, header map[string]string, content interf
 	if content != nil {
 		switch content.(type) {
 		case string:
-			arr:= []byte(content.(string))
-			reader = bytes.NewReader(arr)
+			str:= content.(string)
+			reader =strings.NewReader(str)
 			break
 		default:
 			arr, _ := json.Marshal(content)
@@ -113,8 +114,8 @@ func request(method string, api string, header map[string]string, content interf
 		return ""
 	}
 
-	req.Header.Set("user-agent", UserAgent())
-	req.Header.Set("content-type", "application/x-www-form-urlencoded")
+	// req.Header.Set("user-agent", UserAgent())
+	// req.Header.Set("content-type", "application/x-www-form-urlencoded")
 
 	if header != nil {
 		for key, value := range header {

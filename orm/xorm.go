@@ -69,7 +69,7 @@ func (xorm XOrm) Insert(i interface{}) {
 
 // 小说是否存在
 func (xorm XOrm) BookExist(identify string) bool {
-	_, err := engine.Where("identifier=?", identify).Exec(&Book{})
+	_, err := engine.Where("identifier = ?", identify).Exec(&Book{})
 	if err != nil {
 		log.Print(err)
 	}
@@ -77,8 +77,8 @@ func (xorm XOrm) BookExist(identify string) bool {
 }
 
 // 章节是否存在
-func (xorm XOrm) ChapterExist(identify string, title string) bool {
-	_, err := engine.Where("identifier=? and title=?", identify, title).Exec(&Chapter{})
+func (xorm XOrm) ChapterExist(identify string, source string) bool {
+	_, err := engine.Where("identifier = ? and source = ?", identify, source).Exec(&Chapter{})
 	if err != nil {
 		log.Print(err)
 	}

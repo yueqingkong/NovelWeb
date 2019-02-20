@@ -307,51 +307,80 @@ func (hy HuanYue) Top(top int) {
 func (hy HuanYue) BookAll(url string) {
 	book, chapters := hy.Book(url)
 
-	identify := util.MD5(book.Domain + book.Name)
-	filePath := identify + ".jpg"
-	util.FileDownload(filePath, book.Cover)
-
-	var fileResult net.UpFileResult
-	net.UploadFile(filePath, &fileResult)
-
 	xorm := orm.XOrm{}
-	if fileResult.Code == 2000 {
-		book.Cover = fileResult.Data.URL
-	}
+	baiduTrans := translate.NewBaiDu()
 
-	//translate := translate.NewBaiDu()
-	translate := translate.NewYouDao()
-	//translate := translate.NewTranslate{}
+	// 书本信息
+	identify := util.MD5(book.Domain + book.Name)
+	if xorm.BookExist(identify) {
+		log.Print("[小说已存在]", book.Name)
+	} else {
+		filePath := identify + ".jpg"
+		util.FileDownload(filePath, book.Cover)
 
-	// 书本
-	ormBook := orm.Book{
-		Identifier:  identify,
-		Name:        translate.TranslateLimit(book.Name),
-		Domain:      book.Domain,
-		Cover:       book.Cover,
-		Source:      book.Source,
-		Describe:    translate.TranslateLimit(book.Describe),
-		Author:      translate.TranslateLimit(book.Author),
-		Type:        book.Type,
-		Last_update: book.Update,
-		Language:    book.Language,
+		var fileResult net.UpFileResult
+		net.UploadFile(filePath, &fileResult)
+
+		if fileResult.Code == 2000 {
+			book.Cover = fileResult.Data.URL
+		}
+
+		transBookName := baiduTrans.Translate(book.Name)
+		transBookDesc := baiduTrans.Translate(book.Describe)
+		transBookAuthor := baiduTrans.Translate(book.Author)
+		transBookType := baiduTrans.Translate(book.Type)
+
+		// 翻译失败
+		if transBookName == "" || transBookDesc == "" || transBookAuthor == "" {
+			log.Print("[小说信息翻译失败]", book.Source, transBookName, transBookDesc, transBookAuthor)
+		} else {
+			ormBook := orm.Book{
+				Identifier:  identify,
+				Name:        transBookName,
+				Domain:      book.Domain,
+				Cover:       book.Cover,
+				Source:      book.Source,
+				Describe:    transBookDesc,
+				Author:      transBookAuthor,
+				Type:        transBookType,
+				Last_update: book.Update,
+				Language:    book.Language,
+			}
+
+			log.Print("[小说]", ormBook)
+			xorm.Insert(ormBook)
+		}
 	}
-	xorm.Insert(ormBook)
 
 	// 章节
 	for index, chapter := range chapters {
-		chapterDetail := hy.Chapter(chapter.Source)
+		if xorm.ChapterExist(identify, book.Source) {
+			log.Print("[章节已存在]", book.Name, chapter.Title)
+		} else {
+			chapterDetail := hy.Chapter(chapter.Source)
 
-		ormChapter := orm.Chapter{
-			Identifier: identify,
-			Idx:        index,
-			Idx_name:   translate.TranslateLimit(chapter.Index),
-			Title:      translate.TranslateLimit(chapter.Title),
-			Content:    translate.TranslateLimit(chapterDetail.Content),
-			Source:     book.Source,
-			Domain:     book.Domain,
-			UpTime:     chapterDetail.Update,
+			transChapterIndex := baiduTrans.Translate(chapter.Index)
+			transChapterTitle := baiduTrans.Translate(chapter.Title)
+			transChapterContent := baiduTrans.Translate(chapterDetail.Content)
+
+			// 章节翻译失败
+			if transChapterIndex == "" || transChapterTitle == "" || transChapterContent == "" {
+				log.Print("[小说章节信息翻译失败]", chapter.Source, transChapterIndex, transChapterTitle, transChapterContent)
+			} else {
+				ormChapter := orm.Chapter{
+					Identifier: identify,
+					Idx:        index,
+					Idx_name:   transChapterIndex,
+					Title:      transChapterTitle,
+					Content:    transChapterContent,
+					Source:     book.Source,
+					Domain:     book.Domain,
+					UpTime:     chapterDetail.Update,
+				}
+
+				log.Print("[章节]", book.Name, ormChapter)
+				xorm.Insert(ormChapter)
+			}
 		}
-		xorm.Insert(ormChapter)
 	}
 }
