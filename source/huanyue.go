@@ -19,6 +19,10 @@ var (
 type HuanYue struct {
 }
 
+func NewHuanYue() HuanYue {
+	return HuanYue{}
+}
+
 // 关键字查询
 func (huan HuanYue) SearchKeyword(keyword string, page int) (int, []BookInfo) {
 	var bookInfos = make([]BookInfo, 0)

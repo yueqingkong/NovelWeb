@@ -1,7 +1,6 @@
 package main
 
 import (
-	"NovelWeb/source"
 	"log"
 )
 
@@ -13,13 +12,13 @@ func main() {
 	//	log.Print(err)
 	//}
 
-	links := []string{"http://www.huanyue123.com/book/50/50083/",
-		"http://www.huanyue123.com/book/52/52260/",
-		"http://www.huanyue123.com/book/49/49221/",
-		"http://www.huanyue123.com/book/5/5544/"}
-	hy := source.HuanYue{}
-
-	for _, link := range links {
-		hy.BookAll(link)
-	}
+	//links := []string{"http://www.huanyue123.com/book/50/50083/",
+	//	"http://www.huanyue123.com/book/52/52260/",
+	//	"http://www.huanyue123.com/book/49/49221/",
+	//	"http://www.huanyue123.com/book/5/5544/"}
+	//hy := source.NewHuanYue()
+	//
+	//for _, link := range links {
+	//	hy.BookAll(link)
+	//}
 }
