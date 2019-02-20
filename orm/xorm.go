@@ -38,7 +38,7 @@ type Chapter struct {
 	Idx        int    `xorm:"int" json:"idx"`               //索引序列号
 	Idx_name   string `xorm:"varchar(255)" json:"idx_name"` //索引名，第一章，第二章等
 	Title      string `xorm:"varchar(255)" json:"title"`    //标题
-	Content    string `xorm:"text" json:"content"`  //内容
+	Content    string `xorm:"text" json:"content"`          //内容
 	Source     string `xorm:"varchar(255)" json:"source"`   //来源 crawler
 	Domain     string `xorm:"varchar(255)" json:"domain"`
 	UpTime     string `xorm:"varchar(255)" json:"uptime"` //上传时间,保存的时候该时间为空。上传成功后，设置为更新章节时间
@@ -67,22 +67,28 @@ func (xorm XOrm) Insert(i interface{}) {
 	}
 }
 
+func (xorm XOrm) Books() []Book {
+	var books []Book
+	engine.SQL("select * from book;").Find(&books)
+	return books
+}
+
 // 小说是否存在
 func (xorm XOrm) BookExist(identify string) bool {
-	_, err := engine.Where("identifier = ?", identify).Exec(&Book{})
+	result, err := engine.SQL("select * from book where identifier = ?;", identify).Exist()
 	if err != nil {
 		log.Print(err)
 	}
-	return err == nil
+	return result
 }
 
 // 章节是否存在
-func (xorm XOrm) ChapterExist(identify string, source string) bool {
-	_, err := engine.Where("identifier = ? and source = ?", identify, source).Exec(&Chapter{})
+func (xorm XOrm) ChapterExist(identify string, index string) bool {
+	result, err := engine.SQL("select * from chapter where identifier = ? and idx = ?;", identify, index).Exist()
 	if err != nil {
 		log.Print(err)
 	}
-	return err == nil
+	return result
 }
 
 func (xorm XOrm) Deveices() []Device {

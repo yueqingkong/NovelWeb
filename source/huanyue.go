@@ -312,6 +312,7 @@ func (hy HuanYue) BookAll(url string) {
 
 	// 书本信息
 	identify := util.MD5(book.Domain + book.Name)
+	log.Print("identify", identify)
 	if xorm.BookExist(identify) {
 		log.Print("[小说已存在]", book.Name)
 	} else {
@@ -354,7 +355,7 @@ func (hy HuanYue) BookAll(url string) {
 
 	// 章节
 	for index, chapter := range chapters {
-		if xorm.ChapterExist(identify, book.Source) {
+		if xorm.ChapterExist(identify, string(index)) {
 			log.Print("[章节已存在]", book.Name, chapter.Title)
 		} else {
 			chapterDetail := hy.Chapter(chapter.Source)
@@ -373,7 +374,7 @@ func (hy HuanYue) BookAll(url string) {
 					Idx_name:   transChapterIndex,
 					Title:      transChapterTitle,
 					Content:    transChapterContent,
-					Source:     book.Source,
+					Source:     chapter.Source,
 					Domain:     book.Domain,
 					UpTime:     chapterDetail.Update,
 				}
