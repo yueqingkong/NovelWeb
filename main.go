@@ -5,18 +5,30 @@ import (
 	"NovelWeb/orm"
 	"NovelWeb/source"
 	"log"
+	"time"
 )
 
 func main() {
-	log.Print("start...")
+	log.Print("[小说任务] 启动...")
 
 	//err := router.HttpServer().Run(":8090")
 	//if err != nil {
 	//	log.Print(err)
 	//}
 
-	//links := []string{"http://www.huanyue123.com/book/50/50083/"}
+	ticker := time.NewTicker(time.Hour * 1)
+	go func() {
+		for t := range ticker.C {
+			log.Print("[定时器]", t)
+			bookUpDown()
+		}
+	}()
+}
 
+// 定时任务
+func bookUpDown() {
+	// 下载热门
+	//links := []string{"http://www.huanyue123.com/book/50/50083/"}
 	links := []string{"http://www.huanyue123.com/book/50/50083/",
 		"http://www.huanyue123.com/book/52/52260/",
 		"http://www.huanyue123.com/book/49/49221/",
@@ -24,8 +36,8 @@ func main() {
 		"http://www.huanyue123.com/book/11/11430/",
 		"http://www.huanyue123.com/book/20/20125/",
 		"http://www.huanyue123.com/book/42/42935/",}
-	hy := source.NewHuanYue()
 
+	hy := source.NewHuanYue()
 	for _, link := range links {
 		hy.BookAll(link)
 	}
@@ -42,8 +54,4 @@ func main() {
 	for _, chapter := range chapters {
 		net.UploadChapter(chapter)
 	}
-}
-
-func TestTranslate() {
-	log.Print(net.Translate(" 老鹰吃小鸡结果"))
 }

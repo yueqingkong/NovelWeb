@@ -7,20 +7,26 @@ import (
 )
 
 // 拆分文章 章节/标题
-func SepatateTitle(title string) (string, string) {
+func TitleSepatate(title string) (string, string) {
 	title = strings.TrimSpace(title)
+
+	// 去除标题中的 (*)
+	reg, _ := regexp.Compile("\\([\\s\\S]*\\)")
+	title = reg.ReplaceAllString(title, "")
+
 	var arr = make([]string, 2)
 
-	reg := regexp.MustCompile("第([0-9]+|[\u4e00-\u9fa5]+)章")
+	reg = regexp.MustCompile("第([0-9]+|[\u4e00-\u9fa5]+)章")
 	idx := reg.FindAllString(title, 1)
 	if len(idx) > 1 {
 		arr[0] = idx[0]
 		arr[1] = strings.Replace(title, idx[0], "", -1)
 	} else {
-		reg := regexp.MustCompile("章|节")
+		// 按 章|节 拆分
+		reg := regexp.MustCompile("(章|节)[\\s]*")
 		index := reg.Split(title, -1)
 		if len(index) > 1 {
-			arr[0] = index[0]+"章"
+			arr[0] = index[0] + "章"
 			arr[1] = index[1]
 		} else {
 			arr[0] = title

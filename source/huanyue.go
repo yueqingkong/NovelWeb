@@ -131,7 +131,7 @@ func (huan HuanYue) Book(url string) (orm.Book, []orm.Chapter) {
 	doc.Find("div.book_list").Find("li").Each(func(i int, sec *goquery.Selection) {
 		var chapterInfo orm.Chapter
 		a := sec.Find("a")
-		indexName, title := util.SepatateTitle(a.Text())
+		indexName, title := util.TitleSepatate(a.Text())
 		href := a.AttrOr("href", "")
 
 		chapterInfo = orm.Chapter{
@@ -158,7 +158,7 @@ func (huan HuanYue) Chapter(url string) orm.Chapter {
 
 	// 章节及标题
 	showTitle := body.Find("div.h1title").Text()
-	indexName, title := util.SepatateTitle(showTitle)
+	indexName, title := util.TitleSepatate(showTitle)
 	chapter.Idx_name = indexName
 	chapter.Title = title
 
