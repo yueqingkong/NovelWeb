@@ -16,7 +16,7 @@ type Device struct {
 }
 
 type Book struct {
-	Identifier  string  `xorm:"varchar(255)" json:"identifier"`
+	Identifier  string  `xorm:"varchar(255) unique " json:"identifier"`
 	Domain      string  `xorm:"varchar(255)" json:"domain"`
 	Name        string  `xorm:"varchar(255)" json:"name"`
 	Cover       string  `xorm:"varchar(255)" json:"cover"`
@@ -37,14 +37,14 @@ type Book struct {
 }
 
 type Chapter struct {
-	Identifier string `xorm:"varchar(255)" json:"identifier"`
-	Idx        int    `xorm:"int" json:"idx"`               //索引序列号
-	Idx_name   string `xorm:"varchar(255)" json:"idx_name"` //索引名，第一章，第二章等
-	Title      string `xorm:"varchar(255)" json:"title"`    //标题
-	Content    string `xorm:"mediumtext" json:"content"`    //内容
-	Source     string `xorm:"varchar(255)" json:"source"`   //来源 crawler
+	Identifier string `xorm:"varchar(255) unique(identifier_idx)" json:"identifier"`
+	Idx        int    `xorm:"int" json:"idx"`                                   //索引序列号
+	Idx_name   string `xorm:"varchar(255)" json:"idx_name"`                     //索引名，第一章，第二章等
+	Title      string `xorm:"varchar(255) unique(identifier_idx)" json:"title"` //标题
+	Content    string `xorm:"mediumtext" json:"content"`                        //内容
+	Source     string `xorm:"varchar(255)" json:"source"`                       //来源 crawler
 	Domain     string `xorm:"varchar(255)" json:"domain"`
-	LastUpdate string `xorm:"varchar(255)" json:"last_update"`
+	LastUpdate int64  `json:"last_update"`
 	Keywords   string `xorm:"varchar(255)" json:"keywords"`
 	Index      string `xorm:"varchar(255)" json:"index"`      //索引序列号
 	BookIndex  string `xorm:"varchar(255)" json:"book_index"` //索引序列号
@@ -113,6 +113,24 @@ func (xorm XOrm) ChapterExist(identify string, index string) bool {
 		log.Print(err)
 	}
 	return result
+}
+
+// 更新书籍 上传成功
+func (xorm XOrm) BookUpload(identify string) {
+	sql := "update `book` set is_upload = 1 where identifier = ? ;"
+	_, err := engine.Exec(sql, identify)
+	if err != nil {
+		log.Print(err)
+	}
+}
+
+// 更新章节 上传成功
+func (xorm XOrm) ChapterUpload(identify string) {
+	sql := "update `chapter` set is_upload = 1 where identifier = ? ;"
+	_, err := engine.Exec(sql, identify)
+	if err != nil {
+		log.Print(err)
+	}
 }
 
 func (xorm XOrm) Deveices() []Device {

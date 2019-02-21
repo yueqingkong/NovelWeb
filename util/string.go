@@ -36,6 +36,15 @@ func TitleSepatate(title string) (string, string) {
 	return arr[0], arr[1]
 }
 
+// 章节内容处理
+// 去除html标签 章节错误,点此举报(免注册)
+func ChapterFilter(content string) string {
+	reg := regexp.MustCompile("(<[^>]+>)|(章节错误,点此举报\\(免注册\\))")
+	content = reg.ReplaceAllString(content, "")
+
+	return content
+}
+
 // string 转 int
 func StringToInt(str string) int {
 	var value int

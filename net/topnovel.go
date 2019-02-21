@@ -8,29 +8,40 @@ import (
 	"log"
 )
 
-var uri = "http://119.28.68.41:8989"
+var bookuri = "http://119.28.68.41:9898"
+var fileuri = "http://119.28.68.41:8989"
 
 // 上传小说信息
-func UploadBook(book orm.Book) string {
-	api := fmt.Sprintf("%s%s", uri, "/novel/boss/books")
+func UploadBook(book orm.Book) BookRes {
+	api := fmt.Sprintf("%s%s", bookuri, "/novel/data/crawler/v1/books")
 
-	log.Print(book)
 	resp, _ := resty.R().
 		SetBody(book).
 		Post(api)
 
-	return resp.String()
+	var bookRes BookRes
+
+	err := json.Unmarshal(resp.Body(), &bookRes)
+	if err != nil {
+		log.Print(err)
+	}
+	return bookRes
 }
 
 // 上传章节
-func UploadChapter(chapter orm.Chapter) string {
-	api := fmt.Sprintf("%s%s", uri, fmt.Sprintf("/novel/boss/books/%s/chapters", chapter.Identifier))
+func UploadChapter(chapter orm.Chapter) ChapterRes {
+	api := fmt.Sprintf("%s%s", bookuri, "/novel/data/crawler/v1/chapters")
 
 	resp, _ := resty.R().
 		SetBody(chapter).
 		Post(api)
 
-	return resp.String()
+	var chapterRes ChapterRes
+	err := json.Unmarshal(resp.Body(), &chapterRes)
+	if err != nil {
+		log.Print(err)
+	}
+	return chapterRes
 }
 
 // 文本翻译
@@ -56,7 +67,7 @@ func Translate(source string) string {
 
 // 上传文件
 func UploadFile(path string, result interface{}) {
-	api := fmt.Sprintf("%s%s", uri, "/novel/api/upload")
+	api := fmt.Sprintf("%s%s", fileuri, "/novel/api/upload")
 
 	resp, _ := resty.R().
 		SetFile("file", path).

@@ -24,3 +24,14 @@ type TranslateRes struct {
 	Code int `json:"code"`
 	Data string `json:"data"`
 }
+
+type BookRes struct {
+	Code int `json:"code"`
+	Message string `json:"message"`
+}
+
+
+type ChapterRes struct {
+	Code int `json:"code"`
+	Message string `json:"message"`
+}

@@ -10,25 +10,25 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-)
-
-var (
-	url = "http://www.huanyue123.com"
+	"time"
 )
 
 type HuanYue struct {
+	Url string
 }
 
 func NewHuanYue() HuanYue {
-	return HuanYue{}
+	return HuanYue{
+		Url: "http://www.huanyue123.com",
+	}
 }
 
 // 关键字查询
-func (huan HuanYue) SearchKeyword(keyword string, page int) (int, []orm.Book) {
+func (hy HuanYue) SearchKeyword(keyword string, page int) (int, []orm.Book) {
 	var bookInfos = make([]orm.Book, 0)
 
 	var api = "/modules/article/search.php?searchkey=%s&page=%d"
-	var url = fmt.Sprintf(url+api, util.Utf8ToGbk(keyword), page)
+	var url = fmt.Sprintf(hy.Url+api, util.Utf8ToGbk(keyword), page)
 	log.Print("url: ", url)
 
 	var doc = net.GoQuery(url)
@@ -88,8 +88,9 @@ func (huan HuanYue) Book(url string) (orm.Book, []orm.Chapter) {
 
 	var doc = net.GoQuery(url)
 
-	booktype := doc.Find("div.main").Find("a").Next().Text()
-	book.Type = booktype
+	// 类型
+	bookType:= doc.Find("div.title").Find("a").Next().Text()
+	book.Type = bookType
 
 	doc.Find("div.book_info").Find("div").Each(func(i int, sec *goquery.Selection) {
 		if i == 0 {
@@ -135,7 +136,7 @@ func (huan HuanYue) Book(url string) (orm.Book, []orm.Chapter) {
 		href := a.AttrOr("href", "")
 
 		chapterInfo = orm.Chapter{
-			Idx:      i,
+			Idx:      i + 1,
 			Idx_name: indexName,
 			Title:    title,
 			Domain:   href,
@@ -152,6 +153,7 @@ func (huan HuanYue) Chapter(url string) orm.Chapter {
 
 	chapter.Domain = url
 	chapter.Source = "crawler"
+	chapter.LastUpdate = time.Now().Unix()
 
 	var doc = net.GoQuery(url)
 	body := doc.Find("div.wrapper_main")
@@ -164,19 +166,16 @@ func (huan HuanYue) Chapter(url string) orm.Chapter {
 
 	// 内容
 	content := body.Find("div#htmlContent").Text()
-
-	// 过滤 章节错误,点此举报(免注册)
-	content = strings.Replace(content, "章节错误,点此举报(免注册)", "", -1)
-	chapter.Content = content
+	chapter.Content = util.ChapterFilter(content)
 
 	return chapter
 }
 
 // 每页全本的列表
-func (huan HuanYue) QuanBenTop(tp int) (int, []orm.Book) {
+func (hy HuanYue) QuanBenTop(tp int) (int, []orm.Book) {
 	var bookInfos []orm.Book
 	var api = "/book/quanbu/default-0-0-0-0-2-0-%d.html"
-	var url = fmt.Sprintf(url+api, tp)
+	var url = fmt.Sprintf(hy.Url+api, tp)
 
 	var doc = net.GoQuery(url)
 	doc.Find("div.sitebox").Find("dl").Each(func(i int, sec *goquery.Selection) {
@@ -330,7 +329,7 @@ func (hy HuanYue) BookAll(url string) {
 	if xorm.BookExist(identify) {
 		log.Print("[小说 Book 已存在]", book.Name)
 	} else {
-		filePath := "convers/" + identify + ".jpg"
+		filePath := "covers/" + identify + ".jpg"
 		util.FileDownload(filePath, book.Cover)
 
 		var fileResult net.UpFileResult

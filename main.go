@@ -5,7 +5,6 @@ import (
 	"NovelWeb/orm"
 	"NovelWeb/source"
 	"log"
-	"time"
 )
 
 func main() {
@@ -16,13 +15,16 @@ func main() {
 	//	log.Print(err)
 	//}
 
-	ticker := time.NewTicker(time.Hour * 1)
-	go func() {
-		for t := range ticker.C {
-			log.Print("[定时器]", t)
-			bookUpDown()
-		}
-	}()
+	//ticker := time.NewTicker(time.Hour * 1)
+	//go func() {
+	//	for t := range ticker.C {
+	//		log.Print("[定时器]", t)
+	//		bookUpDown()
+	//	}
+	//}()
+
+
+	bookUpDown()
 }
 
 // 定时任务
@@ -46,12 +48,18 @@ func bookUpDown() {
 	xorm := orm.NewXOrm()
 	books := xorm.Books()
 	for _, book := range books {
-		net.UploadBook(book)
+		bookRes := net.UploadBook(book)
+		if 2000 == bookRes.Code || 2400 == bookRes.Code {
+			xorm.BookUpload(book.Identifier)
+		}
 	}
 
 	// 上传章节
 	chapters := xorm.Chapters()
 	for _, chapter := range chapters {
-		net.UploadChapter(chapter)
+		chapterRes := net.UploadChapter(chapter)
+		if 2000 == chapterRes.Code || 2400 == chapterRes.Code {
+			xorm.ChapterUpload(chapter.Identifier)
+		}
 	}
 }
