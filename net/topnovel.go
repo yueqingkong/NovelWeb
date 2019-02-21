@@ -19,7 +19,6 @@ func UploadBook(book orm.Book) string {
 		SetBody(book).
 		Post(api)
 
-	log.Print(resp.String())
 	return resp.String()
 }
 

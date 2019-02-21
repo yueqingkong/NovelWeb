@@ -135,7 +135,7 @@ func (huan HuanYue) Book(url string) (orm.Book, []orm.Chapter) {
 		href := a.AttrOr("href", "")
 
 		chapterInfo = orm.Chapter{
-			Index:    i,
+			Idx:      i,
 			Idx_name: indexName,
 			Title:    title,
 			Domain:   href,
@@ -325,10 +325,12 @@ func (hy HuanYue) BookAll(url string) {
 
 	// 书本信息
 	identify := util.MD5(book.Domain + book.Name)
+
+	log.Print("keywords", book.Keywords)
 	if xorm.BookExist(identify) {
 		log.Print("[小说 Book 已存在]", book.Name)
 	} else {
-		filePath := identify + ".jpg"
+		filePath := "convers/" + identify + ".jpg"
 		util.FileDownload(filePath, book.Cover)
 
 		var fileResult net.UpFileResult
@@ -360,6 +362,9 @@ func (hy HuanYue) BookAll(url string) {
 			book.Describe = transBookDesc
 			book.Author = transBookAuthor
 			book.Type = transBookType
+			book.Index = strings.Replace(transBookName, " ", "-", -1)
+			book.Translate = "2"
+			book.Keywords = `wuxia,topNovel,novel, light novel, web novel, chinese novel, korean novel, japanese novel, read light novel, read web novel, read koren novel, read chinese novel, read english novel, read novel for free, novel chapter,free,free novel`
 
 			log.Print("[小说]", book)
 			xorm.Insert(book)
@@ -368,7 +373,7 @@ func (hy HuanYue) BookAll(url string) {
 
 	// 章节
 	for _, simpleChapter := range chapters {
-		if xorm.ChapterExist(identify, string(simpleChapter.Idx)) {
+		if xorm.ChapterExist(identify, util.IntToString(simpleChapter.Idx)) {
 			log.Print("[章节已存在]", book.Name, simpleChapter.Title)
 		} else {
 			chapter := hy.Chapter(simpleChapter.Domain)
@@ -394,7 +399,12 @@ func (hy HuanYue) BookAll(url string) {
 				chapter.Idx_name = transIndexName
 				chapter.Title = transTitle
 				chapter.Content = transContent
+				chapter.Index = strings.Replace(transTitle, " ", "-", -1)
 				chapter.Source = "crawler"
+				chapter.Keywords = `wuxia,topNovel,novel, light novel, web novel, chinese novel, korean novel, japanese novel, read light novel, read web novel, read koren novel, read chinese novel, read english novel, read novel for free, novel chapter,free,free novel`
+				chapter.Translate = "2"
+				transBookName := net.Translate(book.Name)
+				chapter.BookIndex = strings.Replace(transBookName, " ", "-", -1)
 
 				log.Print("[章节]", book.Name, chapter)
 				xorm.Insert(chapter)

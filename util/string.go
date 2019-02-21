@@ -1,6 +1,7 @@
 package util
 
 import (
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -10,13 +11,21 @@ func SepatateTitle(title string) (string, string) {
 	title = strings.TrimSpace(title)
 	var arr = make([]string, 2)
 
-	var index = strings.Index(title, " ")
-	if index > 0 {
-		arr[0] = title[0:index]
-		arr[1] = title[index:]
+	reg := regexp.MustCompile("第([0-9]+|[\u4e00-\u9fa5]+)章")
+	idx := reg.FindAllString(title, 1)
+	if len(idx) > 1 {
+		arr[0] = idx[0]
+		arr[1] = strings.Replace(title, idx[0], "", -1)
 	} else {
-		arr[0] = ""
-		arr[1] = title
+		reg := regexp.MustCompile("章|节")
+		index := reg.Split(title, -1)
+		if len(index) > 1 {
+			arr[0] = index[0]+"章"
+			arr[1] = index[1]
+		} else {
+			arr[0] = title
+			arr[1] = title
+		}
 	}
 	return arr[0], arr[1]
 }
@@ -31,4 +40,8 @@ func StringToInt(str string) int {
 		value = i
 	}
 	return value
+}
+
+func IntToString(valye int) string {
+	return strconv.Itoa(valye)
 }

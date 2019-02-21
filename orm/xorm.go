@@ -29,10 +29,11 @@ type Book struct {
 	Source_ctr  int64   `xorm:"bigint" json:"source_ctr"`
 	Ctr         int64   `xorm:"bigint" json:"ctr"`
 	Score       float32 `xorm:"float" json:"score"`
-	Keywords    string  `xorm:"varchar(255)" json:"keywords"`
-	Idx         int     `xorm:"int" json:"idx"`             //索引序列号
-	Status      string  `xorm:"varchar(255)" json:"status"` //状态 1:完成 2：连载
-	IsUpload    int     `xorm:"int" json:"is_upload"`       //上传状态,上传成功后，更新状态位 1
+	Keywords    string  `xorm:"varchar(255)"  json:"keywords"`
+	Index       string  `xorm:"varchar(255)" json:"index"`     //索引序列号
+	Status      string  `xorm:"varchar(255)" json:"status"`    //状态 1:完成 2：连载
+	Translate   string  `xorm:"varchar(255)" json:"translate"` //状态 1:原文 2：机器翻译
+	IsUpload    int     `xorm:"int" json:"is_upload"`          //上传状态,上传成功后，更新状态位 1
 }
 
 type Chapter struct {
@@ -40,13 +41,14 @@ type Chapter struct {
 	Idx        int    `xorm:"int" json:"idx"`               //索引序列号
 	Idx_name   string `xorm:"varchar(255)" json:"idx_name"` //索引名，第一章，第二章等
 	Title      string `xorm:"varchar(255)" json:"title"`    //标题
-	Content    string `xorm:"text" json:"content"`          //内容
+	Content    string `xorm:"mediumtext" json:"content"`    //内容
 	Source     string `xorm:"varchar(255)" json:"source"`   //来源 crawler
 	Domain     string `xorm:"varchar(255)" json:"domain"`
 	LastUpdate string `xorm:"varchar(255)" json:"last_update"`
 	Keywords   string `xorm:"varchar(255)" json:"keywords"`
-	Index      int    `xorm:"varchar(255)" json:"index"`      //索引序列号
-	BookIndex  int    `xorm:"varchar(255)" json:"book_index"` //索引序列号
+	Index      string `xorm:"varchar(255)" json:"index"`      //索引序列号
+	BookIndex  string `xorm:"varchar(255)" json:"book_index"` //索引序列号
+	Translate  string `xorm:"varchar(255)" json:"translate"`  //状态 1:原文 2：机器翻译
 	IsUpload   int    `xorm:"int" json:"is_upload"`           //上传状态,上传成功后，更新状态位 1
 }
 
@@ -79,8 +81,20 @@ func (xorm XOrm) Insert(i interface{}) {
 
 func (xorm XOrm) Books() []Book {
 	var books []Book
-	engine.SQL("select * from book;").Find(&books)
+	err := engine.SQL("select * from book where is_upload != 1;").Find(&books)
+	if err != nil {
+		log.Print(err)
+	}
 	return books
+}
+
+func (xorm XOrm) Chapters() []Chapter {
+	var chapters []Chapter
+	err := engine.SQL("select * from chapter where is_upload != 1;").Find(&chapters)
+	if err != nil {
+		log.Print(err)
+	}
+	return chapters
 }
 
 // 小说是否存在
