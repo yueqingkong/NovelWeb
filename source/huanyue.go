@@ -89,7 +89,7 @@ func (huan HuanYue) Book(url string) (orm.Book, []orm.Chapter) {
 	var doc = net.GoQuery(url)
 
 	// 类型
-	bookType:= doc.Find("div.title").Find("a").Next().Text()
+	bookType := doc.Find("div.title").Find("a").Next().Text()
 	book.Type = bookType
 
 	doc.Find("div.book_info").Find("div").Each(func(i int, sec *goquery.Selection) {
@@ -136,7 +136,6 @@ func (huan HuanYue) Book(url string) (orm.Book, []orm.Chapter) {
 		href := a.AttrOr("href", "")
 
 		chapterInfo = orm.Chapter{
-			Idx:      i + 1,
 			Idx_name: indexName,
 			Title:    title,
 			Domain:   href,
@@ -324,8 +323,6 @@ func (hy HuanYue) BookAll(url string) {
 
 	// 书本信息
 	identify := util.MD5(book.Domain + book.Name)
-
-	log.Print("keywords", book.Keywords)
 	if xorm.BookExist(identify) {
 		log.Print("[小说 Book 已存在]", book.Name)
 	} else {
@@ -371,12 +368,11 @@ func (hy HuanYue) BookAll(url string) {
 	}
 
 	// 章节
-	for _, simpleChapter := range chapters {
-		if xorm.ChapterExist(identify, util.IntToString(simpleChapter.Idx)) {
+	for index, simpleChapter := range chapters {
+		if xorm.ChapterExist(identify, util.IntToString(index)) {
 			log.Print("[章节已存在]", book.Name, simpleChapter.Title)
 		} else {
 			chapter := hy.Chapter(simpleChapter.Domain)
-			log.Print("chapter: ", chapter)
 
 			transIndexName := net.Translate(chapter.Idx_name)
 			transTitle := net.Translate(chapter.Title)
@@ -394,6 +390,7 @@ func (hy HuanYue) BookAll(url string) {
 					log.Print("[章节内容为空]", chapter.Content, "==", transContent)
 				}
 			} else {
+				chapter.Idx = index
 				chapter.Identifier = identify
 				chapter.Idx_name = transIndexName
 				chapter.Title = transTitle

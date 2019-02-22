@@ -37,13 +37,13 @@ type Book struct {
 }
 
 type Chapter struct {
-	Identifier string `xorm:"varchar(255) unique(identifier_idx)" json:"identifier"`
-	Idx        int    `xorm:"int" json:"idx"`                                   //索引序列号
-	Idx_name   string `xorm:"varchar(255)" json:"idx_name"`                     //索引名，第一章，第二章等
-	Title      string `xorm:"varchar(255) unique(identifier_idx)" json:"title"` //标题
-	Content    string `xorm:"mediumtext" json:"content"`                        //内容
-	Source     string `xorm:"varchar(255)" json:"source"`                       //来源 crawler
-	Domain     string `xorm:"varchar(255)" json:"domain"`
+	Identifier string `xorm:"varchar(255) unique(identifier_domain)" json:"identifier"`
+	Idx        int    `xorm:"int" json:"idx"`               //索引序列号
+	Idx_name   string `xorm:"varchar(255)" json:"idx_name"` //索引名，第一章，第二章等
+	Title      string `xorm:"varchar(255)" json:"title"`    //标题
+	Content    string `xorm:"mediumtext" json:"content"`    //内容
+	Source     string `xorm:"varchar(255)" json:"source"`   //来源 crawler
+	Domain     string `xorm:"varchar(255) unique(identifier_domain)" json:"domain"`
 	LastUpdate int64  `json:"last_update"`
 	Keywords   string `xorm:"varchar(255)" json:"keywords"`
 	Index      string `xorm:"varchar(255)" json:"index"`      //索引序列号
@@ -125,9 +125,9 @@ func (xorm XOrm) BookUpload(identify string) {
 }
 
 // 更新章节 上传成功
-func (xorm XOrm) ChapterUpload(identify string) {
-	sql := "update `chapter` set is_upload = 1 where identifier = ? ;"
-	_, err := engine.Exec(sql, identify)
+func (xorm XOrm) ChapterUpload(identify string, idx int) {
+	sql := "update `chapter` set is_upload = 1 where identifier = ? and idx = ?;"
+	_, err := engine.Exec(sql, identify, idx)
 	if err != nil {
 		log.Print(err)
 	}

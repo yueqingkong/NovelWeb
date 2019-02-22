@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/go-resty/resty"
 	"log"
+	"strings"
+	"time"
 )
 
 var bookuri = "http://119.28.68.41:9898"
@@ -46,23 +48,30 @@ func UploadChapter(chapter orm.Chapter) ChapterRes {
 
 // 文本翻译
 func Translate(source string) string {
+	source = strings.TrimSpace(source)
 	if source == "" {
 		return ""
 	}
 
 	api := "http://47.52.131.191:3013/api/baidu"
-	resp, _ := resty.R().
+	resp, resErr := resty.SetTimeout(1 * time.Minute).R().
 		SetBody(TranslateReq{Text: source}).
 		Post(api)
 
-	var result TranslateRes
-	err := json.Unmarshal(resp.Body(), &result)
-	if err != nil {
-		log.Print(err)
-	}
+	var result string
+	if resErr != nil {
+		log.Print("[网络异常]", resErr)
+	} else {
+		var translateRes TranslateRes
 
-	log.Print("[翻译] 原文: ", source, "结果: ", string(resp.Body()))
-	return result.Data
+		err := json.Unmarshal(resp.Body(), &translateRes)
+		if err != nil {
+			log.Print("[翻译解析异常]", err, "[原文]", source)
+		} else {
+			result = translateRes.Data
+		}
+	}
+	return result
 }
 
 // 上传文件

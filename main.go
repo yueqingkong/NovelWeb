@@ -23,7 +23,6 @@ func main() {
 	//	}
 	//}()
 
-
 	bookUpDown()
 }
 
@@ -31,7 +30,8 @@ func main() {
 func bookUpDown() {
 	// 下载热门
 	//links := []string{"http://www.huanyue123.com/book/50/50083/"}
-	links := []string{"http://www.huanyue123.com/book/50/50083/",
+	links := []string{
+		"http://www.huanyue123.com/book/50/50083/",
 		"http://www.huanyue123.com/book/52/52260/",
 		"http://www.huanyue123.com/book/49/49221/",
 		"http://www.huanyue123.com/book/5/5544/",
@@ -50,6 +50,11 @@ func bookUpDown() {
 	for _, book := range books {
 		bookRes := net.UploadBook(book)
 		if 2000 == bookRes.Code || 2400 == bookRes.Code {
+			if 2000 == bookRes.Code {
+				log.Print("[小说上传成功] ", book.Domain)
+			} else {
+				log.Print("[小说重复上传] ", book.Domain)
+			}
 			xorm.BookUpload(book.Identifier)
 		}
 	}
@@ -59,7 +64,13 @@ func bookUpDown() {
 	for _, chapter := range chapters {
 		chapterRes := net.UploadChapter(chapter)
 		if 2000 == chapterRes.Code || 2400 == chapterRes.Code {
-			xorm.ChapterUpload(chapter.Identifier)
+			if 2000 == chapterRes.Code {
+				log.Print("[章节上传成功] ", chapter.Domain, " [章节idx] ", chapter.Idx)
+			} else {
+				log.Print("[章节重复上传] ", chapter.Domain, " [章节idx] ", chapter.Idx)
+			}
+
+			xorm.ChapterUpload(chapter.Identifier, chapter.Idx)
 		}
 	}
 }
