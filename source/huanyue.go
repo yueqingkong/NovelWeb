@@ -374,17 +374,14 @@ func (hy HuanYue) BookAll(url string) {
 		} else {
 			chapter := hy.Chapter(simpleChapter.Domain)
 
-			transIndexName := net.Translate(chapter.Idx_name)
 			transTitle := net.Translate(chapter.Title)
 			transContent := net.Translate(chapter.Content)
 
 			// 章节翻译失败
-			if transIndexName == "" || transTitle == "" || transContent == "" {
-				log.Print("[小说章节信息翻译失败]", simpleChapter, simpleChapter.Domain, transIndexName, transTitle, transContent)
+			if transTitle == "" || transContent == "" {
+				log.Print("[小说章节信息翻译失败]", simpleChapter, simpleChapter.Domain, transTitle, transContent)
 
-				if transIndexName == "" {
-					log.Print("[章节名称为空]", chapter.Idx_name, "==", transIndexName)
-				} else if transTitle == "" {
+				if transTitle == "" {
 					log.Print("[章节标题为空]", chapter.Title, "==", transTitle)
 				} else if transContent == "" {
 					log.Print("[章节内容为空]", chapter.Content, "==", transContent)
@@ -392,7 +389,7 @@ func (hy HuanYue) BookAll(url string) {
 			} else {
 				chapter.Idx = index
 				chapter.Identifier = identify
-				chapter.Idx_name = transIndexName
+				chapter.Idx_name = fmt.Sprintf("Chapter %d", index)
 				chapter.Title = transTitle
 				chapter.Content = transContent
 				chapter.Index = strings.Replace(transTitle, " ", "-", -1)

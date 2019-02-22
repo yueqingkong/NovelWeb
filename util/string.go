@@ -16,13 +16,9 @@ func TitleSepatate(title string) (string, string) {
 
 	var arr = make([]string, 2)
 
-	reg = regexp.MustCompile("第([0-9]+|[\u4e00-\u9fa5]+)章")
-	idx := reg.FindAllString(title, 1)
-	if len(idx) > 0 {
-		arr[0] = idx[0]
-		arr[1] = strings.Replace(title, idx[0], "", -1)
-	} else {
-		// 按 章|节 拆分
+	reg = regexp.MustCompile("第([0-9]+|[\u4e00-\u9fa5]+)章[\\s\\S]+")
+	match := reg.MatchString(title)
+	if match { // 按 章|节 拆分
 		reg := regexp.MustCompile("(章|节)[\\s]*")
 		index := reg.Split(title, -1)
 		if len(index) > 1 && index[0] != "" && index[1] != "" {
@@ -32,6 +28,9 @@ func TitleSepatate(title string) (string, string) {
 			arr[0] = title
 			arr[1] = title
 		}
+	} else {
+		arr[0] = title
+		arr[1] = title
 	}
 	return arr[0], arr[1]
 }

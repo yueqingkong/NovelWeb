@@ -37,7 +37,8 @@ func bookUpDown() {
 		"http://www.huanyue123.com/book/5/5544/",
 		"http://www.huanyue123.com/book/11/11430/",
 		"http://www.huanyue123.com/book/20/20125/",
-		"http://www.huanyue123.com/book/42/42935/",}
+		"http://www.huanyue123.com/book/42/42935/",
+	}
 
 	hy := source.NewHuanYue()
 	for _, link := range links {

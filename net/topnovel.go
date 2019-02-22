@@ -67,6 +67,8 @@ func Translate(source string) string {
 		err := json.Unmarshal(resp.Body(), &translateRes)
 		if err != nil {
 			log.Print("[翻译解析异常]", err, "[原文]", source)
+		} else if translateRes.Code != 2000 {
+			log.Print("[翻译失败] code = ", translateRes.Code)
 		} else {
 			result = translateRes.Data
 		}
