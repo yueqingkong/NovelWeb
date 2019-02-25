@@ -88,6 +88,16 @@ func (xorm XOrm) Books() []Book {
 	return books
 }
 
+// 连载
+func (xorm XOrm) Serialize() []Book {
+	var books []Book
+	err := engine.SQL("select * from book where status = 2;").Find(&books)
+	if err != nil {
+		log.Print(err)
+	}
+	return books
+}
+
 func (xorm XOrm) Chapters() []Chapter {
 	var chapters []Chapter
 	err := engine.SQL("select * from chapter where is_upload != 1;").Find(&chapters)

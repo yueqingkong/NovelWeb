@@ -5,6 +5,7 @@ import (
 	"NovelWeb/orm"
 	"NovelWeb/source"
 	"log"
+	"strings"
 )
 
 func main() {
@@ -28,25 +29,22 @@ func main() {
 
 // 定时任务
 func bookUpDown() {
-	// 下载热门
-	//links := []string{"http://www.huanyue123.com/book/50/50083/"}
-	links := []string{
-		"http://www.huanyue123.com/book/50/50083/",
-		"http://www.huanyue123.com/book/52/52260/",
-		"http://www.huanyue123.com/book/49/49221/",
-		"http://www.huanyue123.com/book/5/5544/",
-		"http://www.huanyue123.com/book/11/11430/",
-		"http://www.huanyue123.com/book/20/20125/",
-		"http://www.huanyue123.com/book/42/42935/",
-	}
+	xorm := orm.NewXOrm()
 
+	// 下载小说
 	hy := source.NewHuanYue()
-	for _, link := range links {
-		hy.BookAll(link)
+	hy.Pull()
+
+	// 本地连载书籍，同步最新章节
+	serializes := xorm.Serialize()
+
+	for _, book := range serializes {
+		if strings.Contains(book.Domain, hy.Url) {
+			hy.BookAll(book.Domain)
+		}
 	}
 
 	// 上传书本
-	xorm := orm.NewXOrm()
 	books := xorm.Books()
 	for _, book := range books {
 		bookRes := net.UploadBook(book)
