@@ -37,7 +37,7 @@ func (hy HuanYue) homePage() {
 		href := a.AttrOr("href", "")
 
 		log.Print("[推荐阅读]|[最新入库小说]", text, href)
-		hy.bookAll(href)
+		hy.BookAll(href)
 	})
 
 	doc.Find("div.news").Find("div.bk").Each(func(i int, sec *goquery.Selection) {
@@ -46,7 +46,7 @@ func (hy HuanYue) homePage() {
 		href := a.AttrOr("href", "")
 
 		log.Print("[热门小说]", text, href)
-		hy.bookAll(href)
+		hy.BookAll(href)
 	})
 
 	doc.Find("div.novelslist").Each(func(i int, sec *goquery.Selection) {
@@ -56,7 +56,7 @@ func (hy HuanYue) homePage() {
 
 			log.Print("[小说类型]", text, href)
 			if text != "" {
-				hy.bookAll(href)
+				hy.BookAll(href)
 			}
 		})
 	})
@@ -67,7 +67,7 @@ func (hy HuanYue) homePage() {
 		href := a.AttrOr("href", "")
 
 		log.Print("[最近更新小说列表]", text, href)
-		hy.bookAll(href)
+		hy.BookAll(href)
 	})
 }
 
@@ -87,7 +87,7 @@ func (hy HuanYue) bookRoom() {
 
 ///////////////////////////////////////////////////   功能  /////////////////////////////////////////////////////
 // 单本书籍及其列表
-func (hy HuanYue) bookAll(url string) {
+func (hy HuanYue) BookAll(url string) {
 	book, chapters := hy.book(url)
 
 	xorm := orm.XOrm{}
@@ -282,6 +282,6 @@ func (hy HuanYue) quanBen(tp int) {
 		a := sec.Find("a").First()
 		href := a.AttrOr("href", "")
 
-		hy.bookAll(href)
+		hy.BookAll(href)
 	})
 }

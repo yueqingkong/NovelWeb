@@ -25,7 +25,7 @@ func UploadBook(book orm.Book) BookRes {
 
 	err := json.Unmarshal(resp.Body(), &bookRes)
 	if err != nil {
-		log.Print(err)
+		log.Print("[net] UploadBook: ", err)
 	}
 	return bookRes
 }
@@ -41,7 +41,7 @@ func UploadChapter(chapter orm.Chapter) ChapterRes {
 	var chapterRes ChapterRes
 	err := json.Unmarshal(resp.Body(), &chapterRes)
 	if err != nil {
-		log.Print(err)
+		log.Print("[net] UploadChapter: ", err)
 	}
 	return chapterRes
 }
@@ -60,15 +60,15 @@ func Translate(source string) string {
 
 	var result string
 	if resErr != nil {
-		log.Print("[网络异常]", resErr)
+		log.Print("[net] 网络异常: ", resErr)
 	} else {
 		var translateRes TranslateRes
 
 		err := json.Unmarshal(resp.Body(), &translateRes)
 		if err != nil {
-			log.Print("[翻译解析异常]", err, "[原文]", source)
+			log.Print("[net] 翻译解析异常: ", err, "[原文]", source)
 		} else if translateRes.Code != 2000 {
-			log.Print("[翻译失败] code = ", translateRes.Code)
+			log.Print("[net] 翻译失败 code = ", translateRes.Code)
 		} else {
 			result = translateRes.Data
 		}
@@ -86,6 +86,6 @@ func UploadFile(path string, result interface{}) {
 
 	err := json.Unmarshal(resp.Body(), result)
 	if err != nil {
-		log.Print(err)
+		log.Print("[net] UploadFile: ", err)
 	}
 }
