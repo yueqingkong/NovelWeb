@@ -1,4 +1,4 @@
-package source
+package web
 
 import (
 	"NovelWeb/net"
@@ -8,7 +8,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -26,6 +25,7 @@ func NewHuanYue() HuanYue {
 // 网站小说下载
 func (hy HuanYue) Pull() {
 	hy.homePage()
+	hy.bookRoom()
 }
 
 // 首页
@@ -37,7 +37,7 @@ func (hy HuanYue) homePage() {
 		href := a.AttrOr("href", "")
 
 		log.Print("[推荐阅读]|[最新入库小说]", text, href)
-		hy.BookAll(href)
+		hy.bookAll(href)
 	})
 
 	doc.Find("div.news").Find("div.bk").Each(func(i int, sec *goquery.Selection) {
@@ -46,7 +46,7 @@ func (hy HuanYue) homePage() {
 		href := a.AttrOr("href", "")
 
 		log.Print("[热门小说]", text, href)
-		hy.BookAll(href)
+		hy.bookAll(href)
 	})
 
 	doc.Find("div.novelslist").Each(func(i int, sec *goquery.Selection) {
@@ -56,7 +56,7 @@ func (hy HuanYue) homePage() {
 
 			log.Print("[小说类型]", text, href)
 			if text != "" {
-				hy.BookAll(href)
+				hy.bookAll(href)
 			}
 		})
 	})
@@ -67,13 +67,30 @@ func (hy HuanYue) homePage() {
 		href := a.AttrOr("href", "")
 
 		log.Print("[最近更新小说列表]", text, href)
-		hy.BookAll(href)
+		hy.bookAll(href)
 	})
 }
 
-// 单本书籍
-func (hy HuanYue) BookAll(url string) {
-	book, chapters := hy.Book(url)
+// 书库
+func (hy HuanYue) bookRoom() {
+	api := hy.Url + "/book/"
+
+	// 总页数
+	var doc = net.GoQuery(api)
+	max := doc.Find("div.pagelink").Find("a.last").Text()
+	maxPage := util.StringToInt(max)
+
+	for i := 1; i < maxPage; i++ {
+		hy.quanBen(i)
+	}
+}
+
+
+
+///////////////////////////////////////////////////   功能  /////////////////////////////////////////////////////
+// 单本书籍及其列表
+func (hy HuanYue) bookAll(url string) {
+	book, chapters := hy.book(url)
 
 	xorm := orm.XOrm{}
 
@@ -128,7 +145,7 @@ func (hy HuanYue) BookAll(url string) {
 		if xorm.ChapterExist(identify, util.IntToString(index)) {
 			log.Print("[章节已存在]", book.Name, simpleChapter.Title)
 		} else {
-			chapter := hy.Chapter(simpleChapter.Domain)
+			chapter := hy.chapter(simpleChapter.Domain)
 
 			transTitle := net.Translate(chapter.Title)
 			transContent := net.Translate(chapter.Content)
@@ -162,60 +179,8 @@ func (hy HuanYue) BookAll(url string) {
 	}
 }
 
-// 关键字查询
-func (hy HuanYue) SearchKeyword(keyword string, page int) (int, []orm.Book) {
-	var bookInfos = make([]orm.Book, 0)
-
-	var api = "/modules/article/search.php?searchkey=%s&page=%d"
-	var url = fmt.Sprintf(hy.Url+api, util.Utf8ToGbk(keyword), page)
-	log.Print("url: ", url)
-
-	var doc = net.GoQuery(url)
-	doc.Find("tbody").Find("tr").Each(func(i int, sec *goquery.Selection) {
-		if i == 0 {
-			return
-		}
-
-		var bookInfo orm.Book
-		sec.Find("td").Each(func(i int, sec *goquery.Selection) {
-			if i == 0 {
-				a := sec.Find("a")
-				name := a.Text()
-				source := a.AttrOr("href", "")
-
-				bookInfo.Name = name
-				bookInfo.Source = source
-			} else if i == 1 {
-				//a := sec.Find("a")
-				//index, title := util.SepatateTitle(a.Text())
-				//href := a.AttrOr("href", "")
-				//
-				//bookInfo.Chapter = ChapterInfo{
-				//	Index:  index,
-				//	Title:  title,
-				//	Source: href,
-				//}
-			} else if i == 2 {
-				author := sec.Text()
-				bookInfo.Author = author
-			} else if i == 3 {
-
-			} else if i == 4 {
-				update := sec.Text()
-				bookInfo.Last_update = update
-			}
-		})
-
-		bookInfos = append(bookInfos, bookInfo)
-	})
-
-	pages := doc.Find("div.pagelink").Find("em").Text()
-	max, _ := strconv.Atoi(strings.Split(pages, "/")[1])
-	return max, bookInfos
-}
-
 // 书本简介及章节列表
-func (huan HuanYue) Book(url string) (orm.Book, []orm.Chapter) {
+func (huan HuanYue) book(url string) (orm.Book, []orm.Chapter) {
 	var book orm.Book
 	var chapterInfos []orm.Chapter
 
@@ -286,7 +251,7 @@ func (huan HuanYue) Book(url string) (orm.Book, []orm.Chapter) {
 }
 
 // 章节详情
-func (huan HuanYue) Chapter(url string) orm.Chapter {
+func (huan HuanYue) chapter(url string) orm.Chapter {
 	var chapter orm.Chapter
 
 	chapter.Domain = url
@@ -310,146 +275,15 @@ func (huan HuanYue) Chapter(url string) orm.Chapter {
 }
 
 // 每页全本的列表
-func (hy HuanYue) QuanBenTop(tp int) (int, []orm.Book) {
-	var bookInfos []orm.Book
+func (hy HuanYue) quanBen(tp int) {
 	var api = "/book/quanbu/default-0-0-0-0-2-0-%d.html"
 	var url = fmt.Sprintf(hy.Url+api, tp)
 
 	var doc = net.GoQuery(url)
 	doc.Find("div.sitebox").Find("dl").Each(func(i int, sec *goquery.Selection) {
-		var bookInfo orm.Book
-		bookInfo.Domain = url
-		bookInfo.Type = "unknow"
+		a := sec.Find("a").First()
+		href := a.AttrOr("href", "")
 
-		img := sec.Find("dt").Find("a").Find("img")
-		bookInfo.Cover = img.AttrOr("src", "")
-
-		sec.Find("dd").Each(func(i int, sec *goquery.Selection) {
-			if i == 0 {
-				update := sec.Find("span").Text()
-				bookInfo.Last_update = update
-
-				a := sec.Find("a")
-				name := a.Text()
-				bookInfo.Name = name
-				href := a.AttrOr("href", "")
-				bookInfo.Source = href
-			} else if i == 1 {
-				author := sec.Find("span").Text()
-				bookInfo.Author = author
-			} else if i == 2 {
-				describe := sec.Text()
-				bookInfo.Describe = describe
-			} else if i == 3 {
-				//a := sec.Find("a")
-				//index, title := util.SepatateTitle(a.Text())
-				//href := a.AttrOr("href", "")
-				//bookInfo.Chapter = orm.Chapter{
-				//	Index:  index,
-				//	Title:  title,
-				//	Source: url + href,
-				//}
-			}
-		})
-		bookInfos = append(bookInfos, bookInfo)
+		hy.bookAll(href)
 	})
-
-	pages := doc.Find("div.pagelink").Find("em#pagestats").Text()
-	var max int
-	var err error
-
-	if pages != "" {
-		splarr := strings.Split(pages, "/")
-		max, err = strconv.Atoi(splarr[1])
-		if err != nil {
-			log.Fatal(tp, splarr, err)
-		}
-	}
-
-	log.Print("bookInfos: ", tp, " max: ", max, " bookInfos: ", bookInfos)
-	return max, bookInfos
-}
-
-//func (hy HuanYue) Parser() {
-//	var startTop = 1 //解析页数
-//
-//	mongo := orm.Mongo{}
-//
-//	maxpage, _ := hy.QuanBenTop(1)
-//	website := mongo.WebSite("http://www.huanyue123.com")
-//	if website.WebsiteURL != "" {
-//		if maxpage != website.LastTop {
-//			startTop = website.LastTop
-//		} else { //解析完成
-//			return
-//		}
-//	}
-//
-//	for ; startTop <= maxpage; startTop++ {
-//		hy.Top(startTop)
-//		time.Sleep(time.Second)
-//	}
-//}
-
-func (hy HuanYue) Top(top int) {
-	log.Print("huanyue [Top]: ", top)
-	_, books := hy.QuanBenTop(top)
-	for _, book := range books {
-		bookinfo, chapters := hy.Book(book.Source)            //每本书籍信息 章节信息
-		identify := util.MD5(bookinfo.Domain + bookinfo.Name) //网站+书名 hash
-		bookName := bookinfo.Name
-
-		xorm := orm.XOrm{}
-		exist := xorm.BookExist(identify)
-		if !exist { //本地没有保存该书
-			var book = orm.Book{
-				Identifier:  identify,
-				Domain:      bookinfo.Domain,
-				Name:        bookName,
-				Cover:       bookinfo.Cover,
-				Source:      "crawler",
-				Describe:    book.Describe,
-				Author:      bookinfo.Author,
-				Type:        bookinfo.Type,
-				Last_update: bookinfo.Last_update,
-				Language:    "zh",
-				Source_ctr:  1,
-				Ctr:         1,
-				Score:       1,
-			}
-
-			if book.Name == "" || book.Cover == "" || book.Describe == "" || book.Author == "" {
-				log.Println("HuanYue book is null")
-				continue
-			} else {
-				xorm.Insert(book)
-				log.Print("HuanYue Parser", book)
-			}
-		}
-
-		for key, chapter := range chapters {
-			exist := xorm.ChapterExist(identify, chapter.Title)
-			if !exist { //本地没有保存该章节
-				chapterDetail := hy.Chapter(chapter.Source)
-
-				var mChapter = orm.Chapter{
-					Identifier: identify,
-					Idx:        key + 1,
-					Idx_name:   string(chapterDetail.Index),
-					Title:      chapterDetail.Title,
-					Content:    chapterDetail.Content,
-					Source:     "crawler",
-					Domain:     chapterDetail.Domain,
-				}
-
-				if mChapter.Title == "" {
-					log.Println("HuanYue chapter is null", chapterDetail)
-					continue
-				} else {
-					xorm.Insert(mChapter)
-					log.Print("HuanYue Parser", mChapter)
-				}
-			}
-		}
-	}
 }

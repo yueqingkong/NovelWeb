@@ -1,4 +1,4 @@
-package source
+package web
 
 type Biquge struct {
 	Source string
