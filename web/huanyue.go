@@ -30,7 +30,7 @@ func (hy HuanYue) Pull() {
 
 // 首页
 func (hy HuanYue) homePage() {
-	var doc = net.GoQuery(hy.Url)
+	var doc = net.GoQuery(hy.Url, true)
 	doc.Find("div.books").Find("li").Each(func(i int, sec *goquery.Selection) {
 		a := sec.Find("a")
 		text := a.Text()
@@ -76,7 +76,7 @@ func (hy HuanYue) bookRoom() {
 	api := hy.Url + "/book/"
 
 	// 总页数
-	var doc = net.GoQuery(api)
+	var doc = net.GoQuery(api, true)
 	max := doc.Find("div.pagelink").Find("a.last").Text()
 	maxPage := util.StringToInt(max)
 
@@ -84,8 +84,6 @@ func (hy HuanYue) bookRoom() {
 		hy.quanBen(i)
 	}
 }
-
-
 
 ///////////////////////////////////////////////////   功能  /////////////////////////////////////////////////////
 // 单本书籍及其列表
@@ -190,7 +188,7 @@ func (huan HuanYue) book(url string) (orm.Book, []orm.Chapter) {
 	book.Source_ctr = 3
 	book.Score = 3.0
 
-	var doc = net.GoQuery(url)
+	var doc = net.GoQuery(url, true)
 
 	// 类型
 	bookType := doc.Find("div.title").Find("a").Next().Text()
@@ -258,7 +256,7 @@ func (huan HuanYue) chapter(url string) orm.Chapter {
 	chapter.Source = "crawler"
 	chapter.LastUpdate = time.Now().Unix()
 
-	var doc = net.GoQuery(url)
+	var doc = net.GoQuery(url, true)
 	body := doc.Find("div.wrapper_main")
 
 	// 章节及标题
@@ -279,7 +277,7 @@ func (hy HuanYue) quanBen(tp int) {
 	var api = "/book/quanbu/default-0-0-0-0-2-0-%d.html"
 	var url = fmt.Sprintf(hy.Url+api, tp)
 
-	var doc = net.GoQuery(url)
+	var doc = net.GoQuery(url, true)
 	doc.Find("div.sitebox").Find("dl").Each(func(i int, sec *goquery.Selection) {
 		a := sec.Find("a").First()
 		href := a.AttrOr("href", "")

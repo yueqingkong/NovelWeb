@@ -29,8 +29,10 @@ func bookUpDown() {
 	//xorm := orm.NewXOrm()
 
 	// 下载小说
-	hy := web.NewHuanYue()
-	hy.Pull()
+	//hy := web.NewHuanYue()
+	//hy.Pull()
+	bi := web.NewBiquge()
+	bi.Pull()
 
 	// 本地连载书籍，同步最新章节
 	//serializes := xorm.Serialize()

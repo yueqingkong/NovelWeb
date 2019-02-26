@@ -16,38 +16,38 @@ type Device struct {
 }
 
 type Book struct {
-	Identifier  string  `xorm:"varchar(255) unique " json:"identifier"`
-	Domain      string  `xorm:"varchar(255)" json:"domain"`
-	Name        string  `xorm:"varchar(255)" json:"name"`
-	Cover       string  `xorm:"varchar(255)" json:"cover"`
-	Source      string  `xorm:"varchar(255)" json:"source"`
-	Describe    string  `xorm:"varchar(5000)" json:"describe"`
-	Author      string  `xorm:"varchar(255)" json:"author"`
-	Type        string  `xorm:"varchar(255)" json:"type"`
-	Last_update string  `xorm:"varchar(255)" json:"last_update"`
-	Language    string  `xorm:"varchar(255)" json:"language"`
-	Source_ctr  int64   `xorm:"bigint" json:"source_ctr"`
-	Ctr         int64   `xorm:"bigint" json:"ctr"`
-	Score       float32 `xorm:"float" json:"score"`
-	Keywords    string  `xorm:"varchar(255)"  json:"keywords"`
-	Index       string  `xorm:"varchar(255)" json:"index"`     //索引序列号
+	Identifier  string  `xorm:"varchar(255) unique " json:"identifier"` // 唯一标志
+	Domain      string  `xorm:"varchar(255)" json:"domain"`// 来源网站
+	Name        string  `xorm:"varchar(255)" json:"name"`//书名
+	Cover       string  `xorm:"varchar(255)" json:"cover"`//封面
+	Source      string  `xorm:"varchar(255)" json:"source"`//来源 crawler
+	Describe    string  `xorm:"varchar(5000)" json:"describe"`//描述
+	Author      string  `xorm:"varchar(255)" json:"author"`//作者
+	Type        string  `xorm:"varchar(255)" json:"type"`//类型
+	Last_update string  `xorm:"varchar(255)" json:"last_update"`//最近更新时间
+	Language    string  `xorm:"varchar(255)" json:"language"`//语言 en,zh
+	Source_ctr  int64   `xorm:"bigint" json:"source_ctr"`//原网站点击率
+	Ctr         int64   `xorm:"bigint" json:"ctr"`//本站点击率
+	Score       float32 `xorm:"float" json:"score"`//评分
+	Keywords    string  `xorm:"varchar(255)"  json:"keywords"`//seo信息
+	Index       string  `xorm:"varchar(255)" json:"index"`     //索引序列号，书名索引
 	Status      string  `xorm:"varchar(255)" json:"status"`    //状态 1:完成 2：连载
 	Translate   string  `xorm:"varchar(255)" json:"translate"` //状态 1:原文 2：机器翻译
 	IsUpload    int     `xorm:"int" json:"is_upload"`          //上传状态,上传成功后，更新状态位 1
 }
 
 type Chapter struct {
-	Identifier string `xorm:"varchar(255) unique(identifier_domain)" json:"identifier"`
+	Identifier string `xorm:"varchar(255) unique(identifier_domain)" json:"identifier"`//书籍唯一标志
 	Idx        int    `xorm:"int" json:"idx"`               //索引序列号
 	Idx_name   string `xorm:"varchar(255)" json:"idx_name"` //索引名，第一章，第二章等
 	Title      string `xorm:"varchar(255)" json:"title"`    //标题
 	Content    string `xorm:"mediumtext" json:"content"`    //内容
 	Source     string `xorm:"varchar(255)" json:"source"`   //来源 crawler
-	Domain     string `xorm:"varchar(255) unique(identifier_domain)" json:"domain"`
-	LastUpdate int64  `json:"last_update"`
-	Keywords   string `xorm:"varchar(255)" json:"keywords"`
-	Index      string `xorm:"varchar(255)" json:"index"`      //索引序列号
-	BookIndex  string `xorm:"varchar(255)" json:"book_index"` //索引序列号
+	Domain     string `xorm:"varchar(255) unique(identifier_domain)" json:"domain"`//来源网站
+	LastUpdate int64  `json:"last_update"`//最近更新时间
+	Keywords   string `xorm:"varchar(255)" json:"keywords"`//seo信息
+	Index      string `xorm:"varchar(255)" json:"index"`      //章节名索引索引
+	BookIndex  string `xorm:"varchar(255)" json:"book_index"` //书名索引
 	Translate  string `xorm:"varchar(255)" json:"translate"`  //状态 1:原文 2：机器翻译
 	IsUpload   int    `xorm:"int" json:"is_upload"`           //上传状态,上传成功后，更新状态位 1
 }
