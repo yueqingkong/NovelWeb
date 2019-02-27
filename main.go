@@ -17,7 +17,7 @@ func main() {
 		bookSerializate()
 	}()
 
-	ticker := time.NewTicker(time.Minute * 30)
+	ticker := time.NewTicker(time.Hour * 1)
 	defer ticker.Stop()
 	go func() {
 		for t := range ticker.C {
