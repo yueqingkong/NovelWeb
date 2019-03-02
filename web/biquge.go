@@ -53,43 +53,45 @@ func (bi Biquge) bookAll(url string) {
 		var fileResult net.UpFileResult
 		net.UploadFile(filePath, &fileResult)
 
-		if fileResult.Code == 2000 {
+		if fileResult.Code == 2000 { // 封面上传成功
 			book.Cover = fileResult.Data.URL
-		}
 
-		transBookName := net.Translate(book.Name)
-		transBookDesc := net.Translate(book.Describe)
-		transBookAuthor := net.Translate(book.Author)
-		transBookType := net.Translate(book.Type)
+			transBookName := net.Translate(book.Name)
+			transBookDesc := net.Translate(book.Describe)
+			transBookAuthor := net.Translate(book.Author)
+			transBookType := net.Translate(book.Type)
 
-		// 翻译失败
-		if transBookName == "" || transBookDesc == "" || transBookAuthor == "" {
-			log.Print("[小说 Book 翻译失败]", book, transBookName, transBookDesc, transBookAuthor)
+			// 翻译失败
+			if transBookName == "" || transBookDesc == "" || transBookAuthor == "" {
+				log.Print("[小说 Book 翻译失败]", book, transBookName, transBookDesc, transBookAuthor)
 
-			if transBookName == "" {
-				log.Print("[书名为空]", book.Name, "==", transBookName)
-			} else if transBookDesc == "" {
-				log.Print("[简介为空]", book.Describe, "==", transBookDesc)
-			} else if transBookAuthor == "" {
-				log.Print("[作者为空]", book.Author, "==", transBookAuthor)
+				if transBookName == "" {
+					log.Print("[书名为空]", book.Name, "==", transBookName)
+				} else if transBookDesc == "" {
+					log.Print("[简介为空]", book.Describe, "==", transBookDesc)
+				} else if transBookAuthor == "" {
+					log.Print("[作者为空]", book.Author, "==", transBookAuthor)
+				}
+			} else {
+				book.Identifier = identify
+				book.Name = transBookName
+				book.Describe = transBookDesc
+				book.Author = transBookAuthor
+				book.Type = transBookType
+				book.Index = strings.Replace(transBookName, " ", "-", -1)
+				book.Translate = "2"
+				book.Domain = url
+				book.Source = "crawler"
+				book.Language = "zh"
+				book.Source_ctr = 3
+				book.Score = 3.0
+				book.Keywords = `wuxia,topNovel,novel, light novel, web novel, chinese novel, korean novel, japanese novel, read light novel, read web novel, read koren novel, read chinese novel, read english novel, read novel for free, novel chapter,free,free novel`
+
+				log.Print("[小说]", book)
+				xorm.Insert(book)
 			}
 		} else {
-			book.Identifier = identify
-			book.Name = transBookName
-			book.Describe = transBookDesc
-			book.Author = transBookAuthor
-			book.Type = transBookType
-			book.Index = strings.Replace(transBookName, " ", "-", -1)
-			book.Translate = "2"
-			book.Domain = url
-			book.Source = "crawler"
-			book.Language = "zh"
-			book.Source_ctr = 3
-			book.Score = 3.0
-			book.Keywords = `wuxia,topNovel,novel, light novel, web novel, chinese novel, korean novel, japanese novel, read light novel, read web novel, read koren novel, read chinese novel, read english novel, read novel for free, novel chapter,free,free novel`
-
-			log.Print("[小说]", book)
-			xorm.Insert(book)
+			log.Print("[封面]上传失败", book.Name)
 		}
 	}
 
