@@ -11,33 +11,54 @@ import (
 	"time"
 )
 
-type Biquge struct {
+type DingDian struct {
 	Url string
 }
 
-func NewBiquge() Biquge {
-	return Biquge{
-		Url: "http://www.xbiquge.la",
+func NewDingDian() DingDian {
+	return DingDian{
+		Url: "https://www.x23us.com",
 	}
 }
 
 // 网站小说下载
-func (bi Biquge) Pull() {
-	api := fmt.Sprintf("%s%s", bi.Url, "/xiaoshuodaquan/")
-	doc := net.GoQuery(api, false)
+func (dd DingDian) Pull() {
+	for i := 1; i <= 10; i++ {
+		url := fmt.Sprintf("/class/%d_", i) + "%d.html"
+		log.Print("[url]", url)
+		dd.normal(url)
+	}
 
-	doc.Find("div#main").Find("li").Each(func(i int, sec *goquery.Selection) {
-		a := sec.Find("a").First()
-		href := a.AttrOr("href", "")
+	// 全本
+	dd.normal("/quanben/%d")
+}
 
-		bi.BookAll(href)
-	})
+// 通用
+func (dd DingDian) normal(format string) {
+	api := fmt.Sprintf("%s%s", dd.Url, fmt.Sprintf(format, 1))
+	doc := net.GoQuery(api, true)
+
+	lastA := doc.Find("div.bdsub").Find("dd.pages").Find("div.pagelink").Find("a.last")
+	totalPage := util.StringToInt(lastA.Text())
+	for i := 1; i <= totalPage; i++ {
+		api = fmt.Sprintf("%s%s", dd.Url, fmt.Sprintf(format, i))
+		doc = net.GoQuery(api, true)
+
+		doc.Find("div.bdsub").Find("tbody").Find("tr[bgcolor='#FFFFFF']").Each(func(i int, sec *goquery.Selection) {
+			sec.Find("td").Each(func(i int, sec *goquery.Selection) {
+				if i == 0 {
+					bookUrl := sec.Find("a").First().AttrOr("href", "")
+					dd.BookAll(bookUrl)
+				}
+			})
+		})
+	}
 }
 
 ///////////////////////////////////////////////////   功能  /////////////////////////////////////////////////////
 // 小说信息及列表
-func (bi Biquge) BookAll(url string) {
-	book, chapters := bi.book(url)
+func (dd DingDian) BookAll(url string) {
+	book, chapters := dd.book(url)
 
 	log.Print(book)
 	xorm := orm.XOrm{}
@@ -48,6 +69,7 @@ func (bi Biquge) BookAll(url string) {
 		log.Print("[小说 Book 已存在]", book.Name)
 	} else {
 		filePath := "covers/" + identify + ".jpg"
+		log.Print("[cover]", book.Cover)
 		util.FileDownload(filePath, book.Cover)
 
 		var fileResult net.UpFileResult
@@ -88,6 +110,10 @@ func (bi Biquge) BookAll(url string) {
 				book.Keywords = `wuxia,topNovel,novel, light novel, web novel, chinese novel, korean novel, japanese novel, read light novel, read web novel, read koren novel, read chinese novel, read english novel, read novel for free, novel chapter,free,free novel`
 
 				log.Print("[小说]", book)
+
+				//j, _ := json.Marshal(book)
+				//log.Print(string(j))
+
 				xorm.Insert(book)
 			}
 		} else {
@@ -101,7 +127,7 @@ func (bi Biquge) BookAll(url string) {
 		if xorm.ChapterExist(identify, util.IntToString(index)) {
 			log.Print("[章节已存在]", book.Name, simpleChapter.Title)
 		} else {
-			chapter := bi.chapter(simpleChapter.Domain)
+			chapter := dd.chapter(simpleChapter.Domain)
 
 			transTitle := net.Translate(chapter.Title)
 			transContent := net.Translate(chapter.Content)
@@ -131,6 +157,9 @@ func (bi Biquge) BookAll(url string) {
 				chapter.BookIndex = strings.Replace(transBookName, " ", "-", -1)
 
 				log.Print("[章节]", book.Name, chapter)
+
+				//j, _ := json.Marshal(chapter)
+				//log.Print(string(j))
 				xorm.Insert(chapter)
 			}
 		}
@@ -138,68 +167,103 @@ func (bi Biquge) BookAll(url string) {
 }
 
 // 小说
-func (bi Biquge) book(url string) (orm.Book, []orm.Chapter) {
-	doc := net.GoQuery(url, false)
-
+func (dd DingDian) book(url string) (orm.Book, []orm.Chapter) {
 	var book orm.Book
 	var chapters []orm.Chapter
 
 	book.Domain = url
 
-	doc.Find("div.con_top").Find("a").Each(func(i int, sec *goquery.Selection) {
-		if i == 2 {
-			book.Type = sec.Text()
-		}
-	})
-
-	cover := doc.Find("div#sidebar").Find("img").AttrOr("src", "")
-	book.Cover = cover
-
-	maininfo := doc.Find("div#maininfo")
-	info := maininfo.Find("div#info")
-
-	name := info.Find("h1").Text()
-	book.Name = name
-
-	info.Find("p").Each(func(i int, sec *goquery.Selection) {
+	doc := net.GoQuery(url, true)
+	doc.Find("div.bdsub").Find("dd").Each(func(i int, sec *goquery.Selection) {
 		if i == 0 {
-			author := strings.Split(sec.Text(), "：")[1]
-			book.Author = author
-		} else if i == 2 {
-			update := strings.Split(sec.Text(), "：")[1]
-			book.Last_update = update
+			h1Txt := sec.Find("h1").Text()
+			name := strings.Split(h1Txt, " ")[0]
+			book.Name = name
+		} else if i == 1 {
+			// 封面
+			src := sec.Find("a.hst").Find("img").AttrOr("src", "")
+			src = dd.Url + src
+			book.Cover = src
+
+			// 小说属性
+			sec.Find("tbody").Find("tr").Each(func(i int, sec *goquery.Selection) {
+				if i == 0 {
+					sec.Find("td").Each(func(j int, sec *goquery.Selection) {
+						if j == 0 {
+							bookType := sec.Find("a").Text()
+							book.Type = bookType
+						} else if j == 1 {
+							author := sec.Text()
+							book.Author = author
+						} else if j == 2 {
+							statusTxt := sec.Text()
+
+							var status string
+							if strings.Contains(statusTxt, "连载中") {
+								status = "2"
+							} else {
+								status = "1"
+							}
+							book.Status = status
+						}
+					})
+				} else if i == 1 {
+					sec.Find("td").Each(func(j int, sec *goquery.Selection) {
+						if j == 2 {
+							update := sec.Text()
+							book.Last_update = update
+						}
+					})
+				}
+			})
+
+			chapterUrl := sec.Find("p.btnlinks").Find("a").AttrOr("href", "")
+			chapterDoc := net.GoQuery(chapterUrl, true)
+			chapterDoc.Find("div.bdsub").Find("tbody").Find("td.L").Each(func(i int, sec *goquery.Selection) {
+				a := sec.Find("a")
+				txt := a.Text()
+				index, title := util.TitleSepatate(txt)
+				href := a.AttrOr("href", "")
+				url := chapterUrl + href
+
+				chapter := orm.Chapter{
+					Idx:      i + 1,
+					Idx_name: index,
+					Domain:   url,
+					Title:    title,
+				}
+				chapters = append(chapters, chapter)
+			})
+		} else if i == 3 {
+			sec.Find("p").Each(func(i int, sec *goquery.Selection) {
+				if i == 1 {
+					describe := sec.Text()
+					book.Describe = describe
+				}
+			})
 		}
 	})
-
-	maininfo.Find("div#intro").Find("p").Each(func(i int, sec *goquery.Selection) {
-		if i == 1 {
-			introTxt := sec.Text()
-			book.Describe = introTxt
-		}
-	})
-
-	doc.Find("div#list").Find("dd").Each(func(i int, sec *goquery.Selection) {
-		a := sec.Find("a")
-		href := bi.Url + a.AttrOr("href", "")
-
-		chapter := orm.Chapter{Domain: href}
-		chapters = append(chapters, chapter)
-	})
-
 	return book, chapters
 }
 
 // 章节
-func (bi Biquge) chapter(url string) orm.Chapter {
+func (dd DingDian) chapter(url string) orm.Chapter {
+	doc := net.GoQuery(url, true)
 	var chapter orm.Chapter
 
-	doc := net.GoQuery(url, false)
-	content := doc.Find("div.content_read")
-	h1 := content.Find("div.bookname").Find("h1").Text()
-	_, title := util.TitleSepatate(h1)
-	chapter.Title = title
+	bdsub := doc.Find("div.bdsub")
 
-	conTxt := content.Find("div#content").Text()
-	chapter.Content = conTxt
+	// 标题
+	bdsub.Find("dd").Each(func(i int, sec *goquery.Selection) {
+		if i == 0 {
+			h1Txt := sec.Find("h1").Text()
+			index, title := util.TitleSepatate(h1Txt)
+			chapter.Idx_name = index
+			chapter.Title = title
+		} else if i == 2 {
+			content := strings.Replace(sec.Text(), "顶 点 小 说 Ｘ ２３ Ｕ Ｓ．Ｃ ＯＭ", "", -1)
+			chapter.Content = content
+		}
+	})
 	return chapter
 }

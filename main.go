@@ -14,9 +14,11 @@ func main() {
 	go func() {
 		log.Print("[小说] 爬取网站...")
 		bookUpDown()
+
 		bookSerializate()
 	}()
 
+	//ticker := time.NewTicker(time.Second * 10)
 	ticker := time.NewTicker(time.Hour * 1)
 	defer ticker.Stop()
 	go func() {
@@ -36,6 +38,8 @@ func bookUpDown() {
 	hy.Pull()
 	bi := web.NewBiquge()
 	bi.Pull()
+	dd:=web.NewDingDian()
+	dd.Pull()
 }
 
 // 同步连载最新章节
@@ -43,11 +47,15 @@ func bookSerializate() {
 	xorm := orm.NewXOrm()
 
 	hy := web.NewHuanYue()
+	bi:=web.NewBiquge()
 
 	serializes := xorm.Serialize()
 	for _, book := range serializes {
 		if strings.Contains(book.Domain, hy.Url) {
 			hy.BookAll(book.Domain)
+		}
+		if strings.Contains(book.Domain, bi.Url) {
+			bi.BookAll(book.Domain)
 		}
 	}
 }
