@@ -1,9 +1,14 @@
 ## Note
+(个人)爬网站小说
 
-## 翻译
-translate.BD.Translate("药师有了自己的想法，道：“给他喝灵血")
+## 功能
+* 热门小说
+* 书名搜索
+* 完本下载
+* 未完载小说同步
 
-## 参考
-* [有道](http://fanyi.youdao.com/)
-* [Baidu](https://fanyi.baidu.com/)
-* [Google](https://translate.google.cn/)
+## 来源
+* [幻月书院](http://www.huanyue123.com/)
+* [新笔趣阁](http://www.xbiquge.la/)
+* [顶点小说](https://www.ddxs.cc/)
+* [3Q中文网](https://www.3qzone.com/)

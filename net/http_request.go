@@ -1,76 +1,14 @@
 package net
 
 import (
-	"NovelWeb/orm"
 	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
 	"log"
-	"mime/multipart"
 	"net/http"
-	"os"
 	"strings"
 )
-
-var uri = "http://119.28.68.41:8989"
-
-func UpBook(ebook orm.Book) string {
-	api := "/novel/data/crawler/v1/books"
-	return Post(uri+api, nil, ebook)
-}
-
-func UpChapter(echapter orm.Chapter) string {
-	api := "/novel/data/crawler/v1/chapters"
-	return Post(uri+api, nil, echapter)
-}
-
-// 上传文件
-func UploadFile(path string, result interface{}) {
-	api := "/novel/api/upload"
-
-	file, err := os.Open(path)
-	if err != nil {
-		log.Print(err)
-	}
-	fileContents, err := ioutil.ReadAll(file)
-	if err != nil {
-		log.Print(err)
-	}
-	fi, err := file.Stat()
-	if err != nil {
-		log.Print(err)
-	}
-	file.Close()
-
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("file", fi.Name())
-	if err != nil {
-		log.Print(err)
-	}
-	part.Write(fileContents)
-
-	err = writer.Close()
-	if err != nil {
-		log.Print(err)
-	}
-
-	request, err := http.NewRequest("POST", uri+api, body)
-	request.Header.Set("Content-Type", writer.FormDataContentType())
-	client := &http.Client{}
-
-	resp, err := client.Do(request)
-	resultContent, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Print(err)
-	}
-
-	err = json.Unmarshal(resultContent, result)
-	if err != nil {
-		log.Print(err)
-	}
-}
 
 func Get(url string, header map[string]string) string {
 	return request("GET", url, header, nil)
