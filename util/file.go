@@ -2,18 +2,20 @@ package util
 
 import (
 	"bytes"
+	"github.com/go-resty/resty"
 	"io"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 )
 
 func FileDownload(local string, url string) {
-	resp, _ := http.Get(url)
-	body, _ := ioutil.ReadAll(resp.Body)
+	resp, err := resty.R().Get(url)
+	if err != nil {
+		log.Print(err)
+	}
+
 	out, _ := os.Create(local)
-	_, err := io.Copy(out, bytes.NewReader(body))
+	_, err = io.Copy(out, bytes.NewReader(resp.Body()))
 	if err != nil {
 		log.Print(err)
 	}
