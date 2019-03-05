@@ -40,6 +40,8 @@ func bookUpDown() {
 	bi.Pull()
 	dd:=web.NewDingDian()
 	dd.Pull()
+	q3:=web.NewQ3()
+	q3.Pull()
 }
 
 // 同步连载最新章节
