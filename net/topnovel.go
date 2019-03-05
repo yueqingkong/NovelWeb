@@ -2,6 +2,7 @@ package net
 
 import (
 	"NovelWeb/orm"
+	"NovelWeb/util"
 	"encoding/json"
 	"fmt"
 	"github.com/go-resty/resty"
@@ -88,4 +89,7 @@ func UploadFile(path string, result interface{}) {
 	if err != nil {
 		log.Print("[net] UploadFile: ", err)
 	}
+
+	// 上传完成后,删除原文件
+	util.FileRemove(path)
 }

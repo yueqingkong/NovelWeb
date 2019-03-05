@@ -6,7 +6,6 @@ import (
 	"NovelWeb/web"
 	"log"
 	"strings"
-	"time"
 )
 
 func main() {
@@ -19,14 +18,14 @@ func main() {
 	}()
 
 	//ticker := time.NewTicker(time.Second * 10)
-	ticker := time.NewTicker(time.Hour * 1)
-	defer ticker.Stop()
-	go func() {
-		for t := range ticker.C {
-			log.Print("[定时器] ", t)
-			bookUpload()
-		}
-	}()
+	//ticker := time.NewTicker(time.Hour * 1)
+	//defer ticker.Stop()
+	//go func() {
+	//	for t := range ticker.C {
+	//		log.Print("[定时器] ", t)
+	//		bookUpload()
+	//	}
+	//}()
 
 	ch := make(chan string)
 	<-ch
@@ -40,11 +39,8 @@ func bookUpDown() {
 	bi.Pull()
 	dd:=web.NewDingDian()
 	dd.Pull()
-<<<<<<< HEAD
-=======
 	q3:=web.NewQ3()
 	q3.Pull()
->>>>>>> a2ff52f4b4d3adee8e8fb57294df5fa156c307b0
 }
 
 // 同步连载最新章节
@@ -53,6 +49,8 @@ func bookSerializate() {
 
 	hy := web.NewHuanYue()
 	bi:=web.NewBiquge()
+	dd:=web.NewDingDian()
+	q3:=web.NewQ3()
 
 	serializes := xorm.Serialize()
 	for _, book := range serializes {
@@ -61,6 +59,12 @@ func bookSerializate() {
 		}
 		if strings.Contains(book.Domain, bi.Url) {
 			bi.BookAll(book.Domain)
+		}
+		if strings.Contains(book.Domain, dd.Url) {
+			dd.BookAll(book.Domain)
+		}
+		if strings.Contains(book.Domain, q3.Url) {
+			q3.BookAll(book.Domain)
 		}
 	}
 }
