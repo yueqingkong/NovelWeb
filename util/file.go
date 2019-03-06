@@ -20,3 +20,13 @@ func FileDownload(local string, url string) {
 		log.Print(err)
 	}
 }
+
+// 删除文件
+func FileRemove(path string) {
+	err := os.Remove(path)
+	if err != nil {
+		log.Print("[FileRemove] ", err, "  path: ", path)
+	} else {
+		log.Print("[FileRemove] ", path)
+	}
+}

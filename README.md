@@ -12,3 +12,4 @@
 * [新笔趣阁](http://www.xbiquge.la/)
 * [顶点小说](https://www.ddxs.cc/)
 * [3Q中文网](https://www.3qzone.com/)
+* [2K小说](https://www.fpzw.com/)
